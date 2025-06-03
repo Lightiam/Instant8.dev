@@ -52,7 +52,7 @@ export default function Landing() {
               with intelligent automation, version control, and collaborative workflows.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start items-center mb-8">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
             <Button 
               onClick={() => setLocation("/dashboard")}
               size="lg"
@@ -70,7 +70,7 @@ export default function Landing() {
           </div>
 
           {/* Graphical Illustration */}
-          <div className="flex justify-center lg:justify-end">
+          <div className="flex justify-center mb-16">
             <div className="relative w-full max-w-lg">
               <svg
                 viewBox="0 0 400 300"
@@ -115,15 +115,12 @@ export default function Landing() {
                 </defs>
                 
                 {/* Cloud Providers */}
-                {/* AWS */}
                 <rect x="260" y="60" width="50" height="35" rx="6" fill="#ff9900" fillOpacity="0.2" stroke="#ff9900" strokeWidth="1"/>
                 <text x="285" y="80" textAnchor="middle" fill="#ff9900" fontSize="10" fontWeight="bold">AWS</text>
                 
-                {/* Azure */}
                 <rect x="260" y="110" width="50" height="35" rx="6" fill="#0078d4" fillOpacity="0.2" stroke="#0078d4" strokeWidth="1"/>
                 <text x="285" y="130" textAnchor="middle" fill="#0078d4" fontSize="10" fontWeight="bold">Azure</text>
                 
-                {/* GCP */}
                 <rect x="260" y="160" width="50" height="35" rx="6" fill="#4285f4" fillOpacity="0.2" stroke="#4285f4" strokeWidth="1"/>
                 <text x="285" y="180" textAnchor="middle" fill="#4285f4" fontSize="10" fontWeight="bold">GCP</text>
                 
@@ -165,10 +162,6 @@ export default function Landing() {
               </svg>
             </div>
           </div>
-        </div>
-
-        {/* Key Features Section */}
-        <div className="mt-20 max-w-4xl mx-auto text-center">
           {/* Key Features */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
             <div className="text-center">
