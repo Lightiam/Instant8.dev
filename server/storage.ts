@@ -178,7 +178,9 @@ export class MemStorage implements IStorage {
     const project: Project = { 
       ...insertProject, 
       id, 
-      createdAt: new Date() 
+      createdAt: new Date(),
+      description: insertProject.description || null,
+      status: insertProject.status || "active"
     };
     this.projects.set(id, project);
     return project;
@@ -203,7 +205,10 @@ export class MemStorage implements IStorage {
       ...insertDeployment, 
       id, 
       createdAt: new Date(),
-      lastDeployedAt: new Date()
+      lastDeployedAt: new Date(),
+      cost: insertDeployment.cost || null,
+      status: insertDeployment.status || "pending",
+      configuration: insertDeployment.configuration || null
     };
     this.deployments.set(id, deployment);
     return deployment;
@@ -229,7 +234,8 @@ export class MemStorage implements IStorage {
     const message: ChatMessage = { 
       ...insertMessage, 
       id, 
-      timestamp: new Date() 
+      timestamp: new Date(),
+      response: null
     };
     this.chatMessages.set(id, message);
     return message;

@@ -49,7 +49,7 @@ export default function Landing() {
       <main className="flex-1 flex items-center justify-center px-6 lg:px-8 py-20">
         <div className="text-center max-w-4xl mx-auto">
           <h1 className="text-5xl lg:text-7xl font-bold mb-6">
-            Deploy in minutes<br>
+            Deploy in minutes<br />
             <span className="text-primary">Scale to millions</span>
           </h1>
           
@@ -79,15 +79,15 @@ export default function Landing() {
           {/* Cloud Providers */}
           <div className="flex justify-center items-center space-x-12 opacity-60">
             <div className="flex items-center space-x-2">
-              <SiAmazonaws className="text-2xl" />
+              <SiAmazonaws className="text-2xl text-orange-500" />
               <span className="text-sm">AWS</span>
             </div>
             <div className="flex items-center space-x-2">
-              <SiMicrosoftazure className="text-2xl" />
+              <SiMicrosoftazure className="text-2xl text-blue-500" />
               <span className="text-sm">Azure</span>
             </div>
             <div className="flex items-center space-x-2">
-              <SiGooglecloud className="text-2xl" />
+              <SiGooglecloud className="text-2xl text-red-500" />
               <span className="text-sm">GCP</span>
             </div>
             <div className="flex items-center space-x-2">
