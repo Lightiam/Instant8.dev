@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Cloud, Github } from "lucide-react";
-import { SiAmazonaws, SiMicrosoftazure, SiGooglecloud } from "react-icons/si";
+import { Cloud, Github, Server, Database, Globe } from "lucide-react";
 import { useLocation } from "wouter";
 
 export default function Landing() {
@@ -79,15 +78,21 @@ export default function Landing() {
           {/* Cloud Providers */}
           <div className="flex justify-center items-center space-x-12 opacity-60">
             <div className="flex items-center space-x-2">
-              <SiAmazonaws className="text-2xl text-orange-500" />
+              <div className="w-6 h-6 bg-orange-500 rounded flex items-center justify-center">
+                <Server className="text-white w-3 h-3" />
+              </div>
               <span className="text-sm">AWS</span>
             </div>
             <div className="flex items-center space-x-2">
-              <SiMicrosoftazure className="text-2xl text-blue-500" />
+              <div className="w-6 h-6 bg-blue-500 rounded flex items-center justify-center">
+                <Database className="text-white w-3 h-3" />
+              </div>
               <span className="text-sm">Azure</span>
             </div>
             <div className="flex items-center space-x-2">
-              <SiGooglecloud className="text-2xl text-red-500" />
+              <div className="w-6 h-6 bg-red-500 rounded flex items-center justify-center">
+                <Globe className="text-white w-3 h-3" />
+              </div>
               <span className="text-sm">GCP</span>
             </div>
             <div className="flex items-center space-x-2">

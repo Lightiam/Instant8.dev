@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Rocket, Cloud, DollarSign, CheckCircle, Activity } from "lucide-react";
-import { SiAmazonaws, SiMicrosoftazure, SiGooglecloud } from "react-icons/si";
+import { Server, Database, Globe } from "lucide-react";
 
 export function Overview() {
   const { data: stats } = useQuery({
@@ -16,11 +16,11 @@ export function Overview() {
   const getProviderIcon = (provider: string) => {
     switch (provider) {
       case "aws":
-        return <SiAmazonaws className="text-orange-500" />;
+        return <Server className="text-orange-500" />;
       case "azure":
-        return <SiMicrosoftazure className="text-blue-500" />;
+        return <Database className="text-blue-500" />;
       case "gcp":
-        return <SiGooglecloud className="text-red-500" />;
+        return <Globe className="text-red-500" />;
       default:
         return <Cloud className="text-gray-500" />;
     }
@@ -123,7 +123,7 @@ export function Overview() {
                 <div className="flex items-center space-x-4">
                   {getStatusBadge(deployment.status)}
                   <span className="text-sm text-slate-400">
-                    {new Date(deployment.lastDeployedAt).toRelativeTimeString()}
+                    {new Date(deployment.lastDeployedAt).toLocaleDateString()}
                   </span>
                 </div>
               </div>

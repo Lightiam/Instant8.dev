@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { SiAmazonaws, SiMicrosoftazure, SiGooglecloud } from "react-icons/si";
+import { Server, Database, Globe } from "lucide-react";
 
 export function Deployments() {
   const { data: deployments } = useQuery({
@@ -13,11 +13,11 @@ export function Deployments() {
   const getProviderIcon = (provider: string, size = "text-lg") => {
     switch (provider) {
       case "aws":
-        return <SiAmazonaws className={`text-orange-500 ${size}`} />;
+        return <Server className={`text-orange-500 ${size}`} />;
       case "azure":
-        return <SiMicrosoftazure className={`text-blue-500 ${size}`} />;
+        return <Database className={`text-blue-500 ${size}`} />;
       case "gcp":
-        return <SiGooglecloud className={`text-red-500 ${size}`} />;
+        return <Globe className={`text-red-500 ${size}`} />;
       default:
         return null;
     }
