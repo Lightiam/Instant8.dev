@@ -10,34 +10,39 @@ export function useWebSocket(onMessage: (message: WebSocketMessage) => void) {
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const wsUrl = `${protocol}//${window.location.host}/ws`;
-    
-    ws.current = new WebSocket(wsUrl);
+    const connect = () => {
+      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+      const wsUrl = `${protocol}//${window.location.host}/ws`;
+      
+      ws.current = new WebSocket(wsUrl);
 
-    ws.current.onopen = () => {
-      setIsConnected(true);
-      console.log("WebSocket connected");
+      ws.current.onopen = () => {
+        setIsConnected(true);
+        console.log("WebSocket connected");
+      };
+
+      ws.current.onmessage = (event) => {
+        try {
+          const message = JSON.parse(event.data);
+          onMessage(message);
+        } catch (error) {
+          console.error("Failed to parse WebSocket message:", error);
+        }
+      };
+
+      ws.current.onclose = () => {
+        setIsConnected(false);
+        console.log("WebSocket disconnected");
+        // Don't automatically reconnect to prevent infinite loops
+      };
+
+      ws.current.onerror = (error) => {
+        console.error("WebSocket error:", error);
+        setIsConnected(false);
+      };
     };
 
-    ws.current.onmessage = (event) => {
-      try {
-        const message = JSON.parse(event.data);
-        onMessage(message);
-      } catch (error) {
-        console.error("Failed to parse WebSocket message:", error);
-      }
-    };
-
-    ws.current.onclose = () => {
-      setIsConnected(false);
-      console.log("WebSocket disconnected");
-    };
-
-    ws.current.onerror = (error) => {
-      console.error("WebSocket error:", error);
-      setIsConnected(false);
-    };
+    connect();
 
     return () => {
       if (ws.current) {

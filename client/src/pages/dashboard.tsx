@@ -5,11 +5,12 @@ import { Deployments } from "@/components/dashboard/deployments";
 import { Projects } from "@/components/dashboard/projects";
 import { Infrastructure } from "@/components/dashboard/infrastructure";
 import { Monitoring } from "@/components/dashboard/monitoring";
+import { Settings } from "@/components/dashboard/settings";
 import { ChatPanel } from "@/components/chat/chat-panel";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 
-type Section = "overview" | "projects" | "deployments" | "infrastructure" | "monitoring";
+type Section = "overview" | "projects" | "deployments" | "infrastructure" | "monitoring" | "settings";
 
 const sectionTitles: Record<Section, { title: string; subtitle: string }> = {
   overview: { title: "Overview", subtitle: "Monitor your deployments and infrastructure" },
@@ -17,6 +18,7 @@ const sectionTitles: Record<Section, { title: string; subtitle: string }> = {
   deployments: { title: "Deployments", subtitle: "Multi-cloud deployment management" },
   infrastructure: { title: "Infrastructure", subtitle: "Monitor and manage your resources" },
   monitoring: { title: "Monitoring", subtitle: "Real-time metrics and alerts" },
+  settings: { title: "Settings", subtitle: "Configure environment variables and cloud credentials" },
 };
 
 export default function Dashboard() {
@@ -34,14 +36,20 @@ export default function Dashboard() {
         return <Infrastructure />;
       case "monitoring":
         return <Monitoring />;
+      case "settings":
+        return <Settings />;
       default:
         return <Overview />;
     }
   };
 
+  const handleSectionChange = (section: string) => {
+    setCurrentSection(section as Section);
+  };
+
   return (
     <div className="flex h-screen bg-slate-950">
-      <Sidebar currentSection={currentSection} onSectionChange={setCurrentSection} />
+      <Sidebar currentSection={currentSection} onSectionChange={handleSectionChange} />
       
       <div className="flex-1 flex">
         {/* Main Content */}
