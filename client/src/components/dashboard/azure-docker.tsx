@@ -59,16 +59,17 @@ export function AzureDocker() {
   // Fetch existing containers
   const { data: containers = [], isLoading } = useQuery({
     queryKey: ['/api/azure/containers'],
-    queryFn: () => apiRequest('/api/azure/containers'),
+    queryFn: ({ queryKey }) => apiRequest(queryKey[0] as string),
   });
 
   // Create new container
   const createContainerMutation = useMutation({
     mutationFn: (config: CreateContainerRequest) => 
-      apiRequest('/api/azure/containers', {
+      fetch('/api/azure/containers', {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(config)
-      }),
+      }).then(res => res.json()),
     onSuccess: () => {
       toast({
         title: "Container deployment started",
@@ -100,9 +101,9 @@ export function AzureDocker() {
   // Stop container
   const stopContainerMutation = useMutation({
     mutationFn: (containerId: string) => 
-      apiRequest(`/api/azure/containers/${containerId}/stop`, {
+      fetch(`/api/azure/containers/${containerId}/stop`, {
         method: 'POST'
-      }),
+      }).then(res => res.json()),
     onSuccess: () => {
       toast({
         title: "Container stopped",
@@ -115,9 +116,9 @@ export function AzureDocker() {
   // Delete container
   const deleteContainerMutation = useMutation({
     mutationFn: (containerId: string) => 
-      apiRequest(`/api/azure/containers/${containerId}`, {
+      fetch(`/api/azure/containers/${containerId}`, {
         method: 'DELETE'
-      }),
+      }).then(res => res.json()),
     onSuccess: () => {
       toast({
         title: "Container deleted",
@@ -190,7 +191,7 @@ export function AzureDocker() {
     <div className="space-y-6">
       <div className="flex items-center space-x-3">
         <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
-          <Docker className="w-5 h-5 text-white" />
+          <Container className="w-5 h-5 text-white" />
         </div>
         <div>
           <h1 className="text-3xl font-bold text-white">Azure Docker Containers</h1>
@@ -210,10 +211,10 @@ export function AzureDocker() {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
               <p className="text-slate-400 mt-2">Loading containers...</p>
             </div>
-          ) : containers.length === 0 ? (
+          ) : (containers as DockerContainer[]).length === 0 ? (
             <Card className="bg-slate-900 border-slate-700">
               <CardContent className="flex flex-col items-center justify-center py-12">
-                <Docker className="w-12 h-12 text-slate-400 mb-4" />
+                <Container className="w-12 h-12 text-slate-400 mb-4" />
                 <h3 className="text-lg font-semibold text-white mb-2">No containers deployed</h3>
                 <p className="text-slate-400 text-center max-w-md mb-6">
                   Deploy your first Docker container to Azure Container Instances to get started.
@@ -225,7 +226,7 @@ export function AzureDocker() {
             </Card>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {containers.map((container: DockerContainer) => (
+              {(containers as DockerContainer[]).map((container: DockerContainer) => (
                 <Card key={container.id} className="bg-slate-900 border-slate-700">
                   <CardHeader>
                     <div className="flex items-center justify-between">

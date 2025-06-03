@@ -6,16 +6,18 @@ import { Projects } from "@/components/dashboard/projects";
 import { Infrastructure } from "@/components/dashboard/infrastructure";
 import { Monitoring } from "@/components/dashboard/monitoring";
 import { Settings } from "@/components/dashboard/settings";
+import { AzureDocker } from "@/components/dashboard/azure-docker";
 import { ChatPanel } from "@/components/chat/chat-panel";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 
-type Section = "overview" | "projects" | "deployments" | "infrastructure" | "monitoring" | "settings";
+type Section = "overview" | "projects" | "deployments" | "azure-docker" | "infrastructure" | "monitoring" | "settings";
 
 const sectionTitles: Record<Section, { title: string; subtitle: string }> = {
   overview: { title: "Overview", subtitle: "Monitor your deployments and infrastructure" },
   projects: { title: "Projects", subtitle: "Manage your development projects" },
   deployments: { title: "Deployments", subtitle: "Multi-cloud deployment management" },
+  "azure-docker": { title: "Azure Docker", subtitle: "Deploy and manage Docker containers on Azure" },
   infrastructure: { title: "Infrastructure", subtitle: "Monitor and manage your resources" },
   monitoring: { title: "Monitoring", subtitle: "Real-time metrics and alerts" },
   settings: { title: "Settings", subtitle: "Configure environment variables and cloud credentials" },
@@ -36,6 +38,8 @@ export default function Dashboard() {
         return <Infrastructure />;
       case "monitoring":
         return <Monitoring />;
+      case "azure-docker":
+        return <AzureDocker />;
       case "settings":
         return <Settings />;
       default:

@@ -11,6 +11,7 @@ export function Sidebar({ currentSection, onSectionChange }: SidebarProps) {
     { id: "overview", label: "Overview", icon: BarChart3 },
     { id: "projects", label: "Projects", icon: Folder, badge: "3" },
     { id: "deployments", label: "Deployments", icon: Rocket, badge: "2" },
+    { id: "azure-docker", label: "Azure Docker", icon: Cloud },
     { id: "infrastructure", label: "Infrastructure", icon: Server },
     { id: "monitoring", label: "Monitoring", icon: BarChart3 },
   ];
