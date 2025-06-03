@@ -5,6 +5,8 @@ import {
   type Deployment, type InsertDeployment,
   type ChatMessage, type InsertChatMessage
 } from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 
 export interface IStorage {
   // Users
@@ -28,6 +30,94 @@ export interface IStorage {
   getChatMessagesByUserId(userId: number): Promise<ChatMessage[]>;
   createChatMessage(message: InsertChatMessage): Promise<ChatMessage>;
   updateChatResponse(id: number, response: string): Promise<ChatMessage | undefined>;
+}
+
+export class DatabaseStorage implements IStorage {
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
+    return user;
+  }
+
+  async getProjectsByUserId(userId: number): Promise<Project[]> {
+    return await db.select().from(projects).where(eq(projects.userId, userId));
+  }
+
+  async getProject(id: number): Promise<Project | undefined> {
+    const [project] = await db.select().from(projects).where(eq(projects.id, id));
+    return project || undefined;
+  }
+
+  async createProject(insertProject: InsertProject): Promise<Project> {
+    const [project] = await db
+      .insert(projects)
+      .values(insertProject)
+      .returning();
+    return project;
+  }
+
+  async getDeploymentsByProjectId(projectId: number): Promise<Deployment[]> {
+    return await db.select().from(deployments).where(eq(deployments.projectId, projectId));
+  }
+
+  async getAllDeployments(): Promise<Deployment[]> {
+    return await db.select().from(deployments);
+  }
+
+  async getDeployment(id: number): Promise<Deployment | undefined> {
+    const [deployment] = await db.select().from(deployments).where(eq(deployments.id, id));
+    return deployment || undefined;
+  }
+
+  async createDeployment(insertDeployment: InsertDeployment): Promise<Deployment> {
+    const [deployment] = await db
+      .insert(deployments)
+      .values(insertDeployment)
+      .returning();
+    return deployment;
+  }
+
+  async updateDeploymentStatus(id: number, status: string): Promise<Deployment | undefined> {
+    const [deployment] = await db
+      .update(deployments)
+      .set({ status, lastDeployedAt: new Date() })
+      .where(eq(deployments.id, id))
+      .returning();
+    return deployment || undefined;
+  }
+
+  async getChatMessagesByUserId(userId: number): Promise<ChatMessage[]> {
+    return await db.select().from(chatMessages).where(eq(chatMessages.userId, userId));
+  }
+
+  async createChatMessage(insertMessage: InsertChatMessage): Promise<ChatMessage> {
+    const [message] = await db
+      .insert(chatMessages)
+      .values(insertMessage)
+      .returning();
+    return message;
+  }
+
+  async updateChatResponse(id: number, response: string): Promise<ChatMessage | undefined> {
+    const [message] = await db
+      .update(chatMessages)
+      .set({ response })
+      .where(eq(chatMessages.id, id))
+      .returning();
+    return message || undefined;
+  }
 }
 
 export class MemStorage implements IStorage {
@@ -251,4 +341,4 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
