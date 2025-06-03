@@ -16,8 +16,13 @@ export default function Landing() {
           </div>
           
           <div className="hidden md:flex items-center space-x-8">
-            <a href="#" className="text-slate-300 hover:text-white transition-colors">Home</a>
-            <a href="#" className="text-slate-300 hover:text-white transition-colors">Pricing</a>
+            <span className="text-white font-medium">Home</span>
+            <button 
+              onClick={() => setLocation("/pricing")}
+              className="text-slate-300 hover:text-white transition-colors"
+            >
+              Pricing
+            </button>
           </div>
 
           <div className="flex items-center space-x-4">

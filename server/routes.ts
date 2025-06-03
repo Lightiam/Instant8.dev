@@ -112,6 +112,177 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // Azure Docker Container endpoints
+  app.get("/api/azure/containers", async (req, res) => {
+    try {
+      // In production, this would call Azure Container Instances API
+      // For now, we'll simulate real Azure container data structure
+      const containers = [
+        {
+          id: "aci-instanti8-web-001",
+          name: "instanti8-web",
+          image: "nginx:latest",
+          status: "running",
+          resourceGroup: "instanti8-rg",
+          location: "eastus",
+          cpu: 1,
+          memory: 1,
+          ports: [80],
+          publicIp: "20.119.45.123",
+          createdAt: new Date(Date.now() - 86400000).toISOString()
+        },
+        {
+          id: "aci-instanti8-api-002",
+          name: "instanti8-api",
+          image: "node:18-alpine",
+          status: "pending",
+          resourceGroup: "instanti8-rg", 
+          location: "westus2",
+          cpu: 2,
+          memory: 2,
+          ports: [3000, 8080],
+          createdAt: new Date(Date.now() - 3600000).toISOString()
+        }
+      ];
+      
+      res.json(containers);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch containers from Azure" });
+    }
+  });
+
+  app.post("/api/azure/containers", async (req, res) => {
+    try {
+      const {
+        name,
+        image,
+        resourceGroup,
+        location,
+        cpu,
+        memory,
+        ports,
+        environmentVariables,
+        command
+      } = req.body;
+
+      // Validate required fields
+      if (!name || !image || !resourceGroup || !location) {
+        return res.status(400).json({ 
+          message: "Missing required fields: name, image, resourceGroup, location" 
+        });
+      }
+
+      // In production, this would use Azure SDK to create container
+      const azureContainerSpec = {
+        containerGroupName: name,
+        containerName: name,
+        image: image,
+        resourceGroup: resourceGroup,
+        location: location,
+        cpu: cpu || 1,
+        memoryInGb: memory || 1,
+        ports: ports || [80],
+        environmentVariables: environmentVariables || {},
+        command: command || [],
+        restartPolicy: "Always",
+        osType: "Linux"
+      };
+
+      // This is where real Azure deployment would happen:
+      /*
+      const containerInstancesClient = new ContainerInstanceManagementClient(
+        credential,
+        subscriptionId
+      );
+      
+      const containerGroup = await containerInstancesClient.containerGroups.beginCreateOrUpdate(
+        resourceGroup,
+        name,
+        {
+          location: location,
+          containers: [{
+            name: name,
+            image: image,
+            resources: {
+              requests: {
+                cpu: cpu,
+                memoryInGb: memory
+              }
+            },
+            ports: ports.map(port => ({ port, protocol: 'TCP' })),
+            environmentVariables: Object.entries(environmentVariables).map(([name, value]) => ({
+              name, value
+            })),
+            command: command.length > 0 ? command : undefined
+          }],
+          osType: 'Linux',
+          restartPolicy: 'Always',
+          ipAddress: {
+            type: 'Public',
+            ports: ports.map(port => ({ port, protocol: 'TCP' }))
+          }
+        }
+      );
+      */
+
+      // Return deployment confirmation
+      const deploymentResult = {
+        id: `aci-${name}-${Date.now()}`,
+        name: name,
+        image: image,
+        status: "pending",
+        resourceGroup: resourceGroup,
+        location: location,
+        cpu: cpu,
+        memory: memory,
+        ports: ports,
+        createdAt: new Date().toISOString(),
+        azureSpec: azureContainerSpec
+      };
+
+      res.status(201).json(deploymentResult);
+    } catch (error) {
+      console.error("Azure container deployment error:", error);
+      res.status(500).json({ 
+        message: "Failed to deploy container to Azure", 
+        error: error.message 
+      });
+    }
+  });
+
+  app.post("/api/azure/containers/:id/stop", async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // In production, this would call Azure API to stop the container
+      // const result = await containerInstancesClient.containerGroups.stop(resourceGroup, containerGroupName);
+      
+      res.json({ 
+        message: "Container stop initiated",
+        containerId: id,
+        status: "stopping"
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to stop container" });
+    }
+  });
+
+  app.delete("/api/azure/containers/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // In production, this would call Azure API to delete the container
+      // const result = await containerInstancesClient.containerGroups.beginDelete(resourceGroup, containerGroupName);
+      
+      res.json({ 
+        message: "Container deletion initiated",
+        containerId: id
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete container" });
+    }
+  });
+
   return httpServer;
 }
 
