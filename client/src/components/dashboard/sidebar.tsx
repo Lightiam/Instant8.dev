@@ -24,10 +24,8 @@ export function Sidebar({ currentSection, onSectionChange }: SidebarProps) {
     <div className="w-64 bg-slate-900 border-r border-slate-700 flex flex-col">
       <div className="p-6 border-b border-slate-700">
         <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-            <Cloud className="text-white w-4 h-4" />
-          </div>
-          <span className="text-xl font-bold text-white">Instantiate</span>
+          <div className="text-xl font-bold text-primary font-mono">&lt;/&gt;</div>
+          <span className="text-xl font-bold text-white">Instanti8.dev</span>
         </div>
       </div>
 

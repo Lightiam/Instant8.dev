@@ -11,10 +11,8 @@ export default function Landing() {
       <header className="relative z-50 px-6 lg:px-8 py-4">
         <nav className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <Cloud className="text-white w-4 h-4" />
-            </div>
-            <span className="text-xl font-bold">Instantiate</span>
+            <div className="text-xl font-bold text-primary font-mono">&lt;/&gt;</div>
+            <span className="text-xl font-bold">Instanti8.dev</span>
           </div>
           
           <div className="hidden md:flex items-center space-x-8">
@@ -48,14 +46,14 @@ export default function Landing() {
       <main className="flex-1 flex items-center justify-center px-6 lg:px-8 py-20">
         <div className="text-center max-w-4xl mx-auto">
           <h1 className="text-5xl lg:text-7xl font-bold mb-6">
-            Deploy in minutes<br />
-            <span className="text-primary">Scale to millions</span>
+            Infrastructure as<br />
+            <span className="text-primary">Code Simplified</span>
           </h1>
           
           <p className="text-xl text-slate-300 mb-8 max-w-3xl mx-auto leading-relaxed">
-            Instantiate is a comprehensive multi-cloud deployment platform.
-            Deploy your applications across AWS, Azure, and Google Cloud Platform with 
-            intelligent Infrastructure as Code, MCP integration, and Agent MCTS libraries.
+            Instanti8.dev transforms complex infrastructure provisioning into simple, declarative code.
+            Define once, deploy everywhere - seamlessly orchestrate resources across AWS, Azure, and GCP 
+            with intelligent automation, version control, and collaborative workflows.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
@@ -64,15 +62,40 @@ export default function Landing() {
               size="lg"
               className="bg-primary hover:bg-primary/90 px-8"
             >
-              Start your project
+              Start provisioning
             </Button>
             <Button 
               variant="outline" 
               size="lg"
               className="border-slate-600 hover:border-slate-500 text-white px-8"
             >
-              Request a demo
+              View templates
             </Button>
+          </div>
+
+          {/* Key Features */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+            <div className="text-center">
+              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <span className="text-primary font-mono text-lg">{"{}"}</span>
+              </div>
+              <h3 className="text-lg font-semibold text-white mb-2">Declarative Configuration</h3>
+              <p className="text-slate-400 text-sm">Define infrastructure using YAML, JSON, or HCL. Version controlled, predictable, and repeatable deployments.</p>
+            </div>
+            <div className="text-center">
+              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <span className="text-primary font-mono text-lg">∞</span>
+              </div>
+              <h3 className="text-lg font-semibold text-white mb-2">GitOps Workflows</h3>
+              <p className="text-slate-400 text-sm">Automated CI/CD pipelines with drift detection, compliance monitoring, and rollback capabilities.</p>
+            </div>
+            <div className="text-center">
+              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <span className="text-primary font-mono text-lg">⚡</span>
+              </div>
+              <h3 className="text-lg font-semibold text-white mb-2">Resource Optimization</h3>
+              <p className="text-slate-400 text-sm">AI-powered cost analysis, resource rightsizing, and automated scaling policies across cloud providers.</p>
+            </div>
           </div>
 
           {/* Cloud Providers */}
