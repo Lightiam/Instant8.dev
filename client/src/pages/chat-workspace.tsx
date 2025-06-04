@@ -166,18 +166,22 @@ export default function ChatWorkspace() {
         description: "Infrastructure deployment initiated to Azure",
       });
 
-      const response = await apiRequest('/api/deploy', {
+      const response = await fetch('/api/deploy', {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify({
           code,
           codeType,
           provider: 'azure',
           resourceType: 'container'
-        }),
-        headers: {
-          'Content-Type': 'application/json'
-        }
+        })
       });
+
+      if (!response.ok) {
+        throw new Error(`Deployment failed: ${response.statusText}`);
+      }
 
       const result = await response.json();
       setDeploymentStatus(prev => ({ ...prev, [deploymentId]: 'success' }));
