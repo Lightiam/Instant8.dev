@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "wouter";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { Overview } from "@/components/dashboard/overview";
 import { Deployments } from "@/components/dashboard/deployments";
@@ -70,7 +71,10 @@ export default function Dashboard() {
                 </p>
               </div>
               <div className="flex items-center space-x-4">
-                <Button className="bg-primary hover:bg-primary/90">
+                <Button 
+                  className="bg-primary hover:bg-primary/90"
+                  onClick={() => window.location.href = '/chat'}
+                >
                   <Plus className="w-4 h-4 mr-2" />
                   New Deployment
                 </Button>
