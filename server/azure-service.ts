@@ -23,6 +23,7 @@ interface ContainerSpec {
 
 export class AzureContainerService {
   private client: ContainerInstanceManagementClient;
+  private appServiceClient: WebSiteManagementClient;
   private subscriptionId: string;
 
   constructor(config: AzureConfig) {
@@ -33,6 +34,10 @@ export class AzureContainerService {
     );
 
     this.client = new ContainerInstanceManagementClient(
+      credential,
+      config.subscriptionId
+    );
+    this.appServiceClient = new WebSiteManagementClient(
       credential,
       config.subscriptionId
     );
@@ -232,6 +237,83 @@ export class AzureContainerService {
     } catch (error: any) {
       console.error('Error creating resource group:', error);
       throw new Error(`Failed to create resource group: ${error.message}`);
+    }
+  }
+
+  async createAppServicePlan(resourceGroup: string, planName: string, location: string, sku: string = 'P1v2') {
+    try {
+      console.log(`Creating App Service Plan: ${planName}`);
+      
+      const servicePlan = {
+        location,
+        sku: {
+          name: sku,
+          tier: 'PremiumV2',
+          size: sku,
+          family: 'Pv2',
+          capacity: 1
+        },
+        kind: 'app'
+      };
+
+      const operation = await this.appServiceClient.appServicePlans.beginCreateOrUpdate(
+        resourceGroup,
+        planName,
+        servicePlan
+      );
+      
+      const result = await operation.pollUntilDone();
+      
+      return {
+        name: planName,
+        resourceGroup,
+        location,
+        sku,
+        id: result.id,
+        status: 'created'
+      };
+    } catch (error: any) {
+      console.error('Error creating App Service Plan:', error);
+      throw new Error(`Failed to create App Service Plan: ${error.message}`);
+    }
+  }
+
+  async createWebApp(resourceGroup: string, appName: string, servicePlanId: string, location: string) {
+    try {
+      console.log(`Creating Web App: ${appName}`);
+      
+      const webApp = {
+        location,
+        serverFarmId: servicePlanId,
+        siteConfig: {
+          appSettings: [],
+          alwaysOn: true,
+          httpLoggingEnabled: true,
+          requestTracingEnabled: true,
+          detailedErrorLoggingEnabled: true
+        },
+        httpsOnly: true
+      };
+
+      const operation = await this.appServiceClient.webApps.beginCreateOrUpdate(
+        resourceGroup,
+        appName,
+        webApp
+      );
+      
+      const result = await operation.pollUntilDone();
+      
+      return {
+        name: appName,
+        resourceGroup,
+        location,
+        url: `https://${appName}.azurewebsites.net`,
+        id: result.id,
+        status: 'created'
+      };
+    } catch (error: any) {
+      console.error('Error creating Web App:', error);
+      throw new Error(`Failed to create Web App: ${error.message}`);
     }
   }
 }

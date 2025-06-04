@@ -170,16 +170,36 @@ export class DeploymentService {
       await azureService.createResourceGroup(resourceSpec.resourceGroup, resourceSpec.location);
       this.addLog(deploymentId, `Resource group ${resourceSpec.resourceGroup} created`);
       
-      // For now, simulate app service creation
-      this.addLog(deploymentId, `App Service ${resourceSpec.appServiceName} would be created here`);
-      this.addLog(deploymentId, `Service Plan ${resourceSpec.servicePlanName} would be created here`);
+      // Create App Service Plan
+      this.addLog(deploymentId, `Creating App Service Plan: ${resourceSpec.servicePlanName}`);
+      const servicePlan = await azureService.createAppServicePlan(
+        resourceSpec.resourceGroup,
+        resourceSpec.servicePlanName,
+        resourceSpec.location,
+        'P1v2'
+      );
+      this.addLog(deploymentId, `App Service Plan created: ${servicePlan.name}`);
+      
+      // Create Web App
+      this.addLog(deploymentId, `Creating Web App: ${resourceSpec.appServiceName}`);
+      const webApp = await azureService.createWebApp(
+        resourceSpec.resourceGroup,
+        resourceSpec.appServiceName,
+        servicePlan.id,
+        resourceSpec.location
+      );
+      this.addLog(deploymentId, `Web App created: ${webApp.name}`);
+      this.addLog(deploymentId, `App URL: ${webApp.url}`);
       
       return {
         resourceGroup: resourceSpec.resourceGroup,
         location: resourceSpec.location,
         appServiceName: resourceSpec.appServiceName,
         servicePlanName: resourceSpec.servicePlanName,
-        status: 'simulated - Azure Resource Manager integration pending'
+        appUrl: webApp.url,
+        servicePlanId: servicePlan.id,
+        webAppId: webApp.id,
+        status: 'deployed'
       };
     } catch (error: any) {
       this.addLog(deploymentId, `Resource deployment failed: ${error.message}`);
