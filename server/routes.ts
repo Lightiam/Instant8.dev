@@ -259,21 +259,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Test Azure connection
   app.post("/api/credentials/test/azure", async (req, res) => {
     try {
-      const azureService = getAzureService();
+      // First validate we have the necessary credentials
+      const config = {
+        clientId: process.env.AZURE_CLIENT_ID,
+        clientSecret: process.env.AZURE_CLIENT_SECRET,
+        tenantId: process.env.AZURE_TENANT_ID,
+        subscriptionId: process.env.AZURE_SUBSCRIPTION_ID
+      };
+
+      if (!config.clientId || !config.clientSecret || !config.tenantId || !config.subscriptionId) {
+        return res.status(400).json({
+          success: false,
+          error: "Missing Azure credentials. Please ensure all Azure environment variables are configured."
+        });
+      }
+
+      // Test authentication with a simple subscription access check
+      const { ClientSecretCredential } = await import('@azure/identity');
+      const { SubscriptionClient } = await import('@azure/arm-subscriptions');
       
-      // Test connection by attempting to list resource groups
-      const testResult = await azureService.listContainers();
+      const credential = new ClientSecretCredential(
+        config.tenantId,
+        config.clientId,
+        config.clientSecret
+      );
+      
+      const subscriptionClient = new SubscriptionClient(credential);
+      const subscription = await subscriptionClient.subscriptions.get(config.subscriptionId);
       
       res.json({ 
         success: true, 
         message: "Azure connection successful",
-        containers: testResult.length 
+        subscription: subscription.displayName,
+        tenantId: config.tenantId
       });
     } catch (error: any) {
       console.error("Azure connection test failed:", error);
+      
+      let errorMessage = error.message || "Failed to connect to Azure";
+      
+      if (error.message?.includes('AADSTS7000215')) {
+        errorMessage = "Invalid client secret. Please ensure you're using the secret VALUE (not the secret ID) from your Azure App Registration.";
+      } else if (error.message?.includes('AADSTS700016')) {
+        errorMessage = "Invalid client ID. Please verify your Azure Application (client) ID.";
+      } else if (error.message?.includes('AADSTS90002')) {
+        errorMessage = "Invalid tenant ID. Please verify your Azure Directory (tenant) ID.";
+      }
+      
       res.status(400).json({ 
         success: false, 
-        error: error.message || "Failed to connect to Azure" 
+        error: errorMessage
       });
     }
   });
