@@ -89,7 +89,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
 
           // Generate AI response
-          const response = generateChatResponse(message.content.toLowerCase());
+          const response = await generateChatResponse(message.content.toLowerCase());
           
           // Update with response
           await storage.updateChatResponse(chatMessage.id, response);
@@ -255,24 +255,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
   return httpServer;
 }
 
-function generateChatResponse(message: string): string {
-  const responses: Record<string, string> = {
-    'deploy to aws': '🚀 Starting AWS deployment...\n\n✅ Creating EC2 instances\n✅ Setting up Load Balancer\n✅ Configuring RDS database\n\n📋 Deployment will be ready in ~5 minutes. You can monitor progress in the Deployments section.',
-    'deploy to azure': '🚀 Initiating Azure deployment...\n\n✅ Provisioning App Services\n✅ Creating SQL Database\n✅ Setting up Blob Storage\n\n📋 Azure deployment in progress. ETA: 7 minutes.',
-    'deploy to gcp': '🚀 Starting Google Cloud deployment...\n\n✅ Creating Compute Engine instances\n✅ Setting up Cloud SQL\n✅ Configuring Cloud Storage\n\n📋 GCP deployment initiated successfully.',
-    'check status': '📊 **Deployment Status**\n\n🟢 AWS Production: Running (99.9% uptime)\n🟡 Azure Staging: Deploying (76% complete)\n🟢 GCP Analytics: Running (100% uptime)\n\n💰 Total monthly cost: $847',
-    'show logs': '📄 **Recent Deployment Logs**\n\n```\n[2024-01-15 14:32:15] AWS: Instance i-1234abcd started\n[2024-01-15 14:31:22] Azure: App service deployment 76% complete\n[2024-01-15 14:30:45] GCP: Health check passed\n[2024-01-15 14:29:12] AWS: Load balancer healthy\n```',
-    'help': '❓ **Available Commands**\n\n• `deploy to [aws|azure|gcp]` - Start new deployment\n• `check status` - View all deployment statuses\n• `show logs` - Display recent logs\n• `monitor [service]` - Show monitoring data\n• `scale [service] [count]` - Scale infrastructure\n• `rollback [deployment]` - Rollback deployment',
-    'monitor': '📈 **Infrastructure Monitoring**\n\n**AWS Production:**\n- CPU: 45% avg\n- Memory: 67% avg\n- Network: 12 MB/s\n\n**Azure Staging:**\n- Response time: 245ms\n- Requests/min: 1,247\n- Error rate: 0.02%',
-    'cost': '💰 **Cost Breakdown**\n\n**AWS:** $324/month\n- EC2: $189\n- RDS: $95\n- ALB: $40\n\n**Azure:** $298/month\n- App Services: $167\n- SQL Database: $89\n- Storage: $42\n\n**GCP:** $225/month\n- Compute: $134\n- BigQuery: $67\n- Storage: $24'
-  };
-
-  // Check for specific keywords
-  for (const key in responses) {
-    if (message.includes(key)) {
-      return responses[key];
+async function generateChatResponse(message: string): Promise<string> {
+  const lowercaseMessage = message.toLowerCase();
+  
+  try {
+    // Azure deployment commands
+    if (lowercaseMessage.includes("deploy") && lowercaseMessage.includes("azure")) {
+      if (lowercaseMessage.includes("nginx") || lowercaseMessage.includes("web")) {
+        return "I'll deploy an nginx web server to Azure Container Instances.\n\nPlease provide:\n• Resource group name\n• Azure region (e.g., 'East US', 'West Europe')\n• Container name\n\nExample: 'Deploy nginx to my-rg in East US named web-server'";
+      }
+      return "I can deploy to Azure Container Instances! What would you like to deploy?\n\n• nginx web server\n• node.js application\n• postgres database\n• custom docker image\n\nTry: 'deploy nginx to azure'";
     }
+    
+    // List containers
+    if (lowercaseMessage.includes("list") || lowercaseMessage.includes("show containers")) {
+      try {
+        const azureService = getAzureService();
+        const containers = await azureService.listContainers();
+        
+        if (containers.length === 0) {
+          return "No Azure containers found in your subscription.\n\nWould you like to deploy one? Try: 'deploy nginx to azure'";
+        }
+        
+        let response = "Your Azure Container Instances:\n\n";
+        containers.forEach(container => {
+          response += `• ${container.name} (${container.status})\n  Image: ${container.image}\n  Location: ${container.location}\n  IP: ${container.publicIp || 'Not assigned'}\n\n`;
+        });
+        
+        return response;
+      } catch (error: any) {
+        return `Error fetching containers: ${error.message}\n\nPlease ensure your Azure credentials are configured in Settings.`;
+      }
+    }
+    
+    // Status check
+    if (lowercaseMessage.includes("status") || lowercaseMessage.includes("check")) {
+      try {
+        const azureService = getAzureService();
+        const containers = await azureService.listContainers();
+        
+        const running = containers.filter(c => c.status === 'running').length;
+        const stopped = containers.filter(c => c.status === 'stopped').length;
+        const pending = containers.filter(c => c.status === 'pending').length;
+        
+        return `Azure Infrastructure Status:\n\n• Running: ${running} containers\n• Stopped: ${stopped} containers\n• Pending: ${pending} containers\n• Total: ${containers.length} containers\n\nNeed details on a specific container? Ask: 'show logs for [container-name]'`;
+      } catch (error: any) {
+        return `Cannot check status: ${error.message}\n\nPlease verify your Azure credentials in Settings.`;
+      }
+    }
+    
+    // Container management
+    if (lowercaseMessage.includes("stop") && lowercaseMessage.includes("container")) {
+      return "I can stop Azure containers for you.\n\nPlease specify:\n• Container name\n• Resource group\n\nExample: 'stop container web-server in my-rg'";
+    }
+    
+    if (lowercaseMessage.includes("delete") || lowercaseMessage.includes("remove")) {
+      return "I can delete Azure containers.\n\nPlease specify:\n• Container name\n• Resource group\n\nExample: 'delete container web-server in my-rg'\n\nWarning: This action cannot be undone.";
+    }
+    
+    // Logs
+    if (lowercaseMessage.includes("logs") || lowercaseMessage.includes("debug")) {
+      return "I can retrieve container logs for debugging.\n\nPlease specify:\n• Container name\n• Resource group\n\nExample: 'show logs for web-server in my-rg'";
+    }
+    
+    // Help
+    if (lowercaseMessage.includes("help")) {
+      return "Azure Cloud Assistant Commands:\n\n• 'deploy nginx to azure' - Deploy web server\n• 'list containers' - Show all containers\n• 'check status' - Infrastructure overview\n• 'stop container [name] in [rg]' - Stop container\n• 'delete container [name] in [rg]' - Delete container\n• 'show logs for [name] in [rg]' - View logs\n\nReady to deploy something?";
+    }
+    
+    // Greetings
+    if (lowercaseMessage.includes("hello") || lowercaseMessage.includes("hi")) {
+      return "Hello! I'm your Azure deployment assistant.\n\nI can help you deploy and manage containers on Azure.\n\nTry: 'deploy nginx to azure' or 'list containers'";
+    }
+    
+    // Default
+    return "I can help manage your Azure infrastructure through chat!\n\nTry:\n• 'deploy nginx to azure'\n• 'list my containers'\n• 'check status'\n• 'help' for more commands\n\nWhat would you like to do?";
+    
+  } catch (error: any) {
+    return `Error processing request: ${error.message}`;
   }
-
-  return "I can help you with:\n\n• Deploy to cloud providers\n• Check deployment status\n• Monitor infrastructure\n• View logs and metrics\n• Manage costs\n\nTry asking: 'deploy to AWS' or 'check status'";
 }

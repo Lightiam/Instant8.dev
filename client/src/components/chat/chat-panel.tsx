@@ -17,7 +17,7 @@ export function ChatPanel() {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: "welcome",
-      content: "👋 Hello! I'm your deployment assistant. I can help you:\n\n• Deploy to AWS, Azure, or GCP\n• Check deployment status\n• Monitor infrastructure\n• Manage resources\n\nTry: \"deploy to AWS\" or \"check status\"",
+      content: "Hello! I'm your Azure deployment assistant. I can help you:\n\n• Deploy containers to Azure\n• Check deployment status\n• Monitor infrastructure\n• Manage resources\n\nTry: 'deploy nginx to azure' or 'list containers'",
       isUser: false,
       timestamp: new Date(),
     },
@@ -71,9 +71,9 @@ export function ChatPanel() {
   };
 
   const quickActions = [
-    "deploy to AWS",
+    "deploy nginx to azure",
+    "list containers",
     "check status",
-    "show logs",
   ];
 
   return (
