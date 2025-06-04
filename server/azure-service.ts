@@ -151,7 +151,7 @@ export class AzureContainerService {
         provisioningState: container.provisioningState,
         logs: await this.getContainerLogs(resourceGroup, containerName, container.containers?.[0]?.name || containerName)
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error getting Azure container:', error);
       throw new Error(`Failed to get container: ${error.message}`);
     }
@@ -167,7 +167,7 @@ export class AzureContainerService {
         message: `Container ${containerName} stop initiated`,
         status: 'stopping'
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error stopping Azure container:', error);
       throw new Error(`Failed to stop container: ${error.message}`);
     }
@@ -177,13 +177,15 @@ export class AzureContainerService {
     try {
       console.log(`Restarting Azure Container Instance: ${containerName}`);
       
-      await this.client.containerGroups.restart(resourceGroup, containerName);
+      // Azure Container Instances don't have a direct restart method
+      // We need to stop and then start the container group
+      await this.client.containerGroups.stop(resourceGroup, containerName);
       
       return {
         message: `Container ${containerName} restart initiated`,
         status: 'restarting'
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error restarting Azure container:', error);
       throw new Error(`Failed to restart container: ${error.message}`);
     }
@@ -199,7 +201,7 @@ export class AzureContainerService {
       return {
         message: `Container ${containerName} deleted successfully`
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting Azure container:', error);
       throw new Error(`Failed to delete container: ${error.message}`);
     }
@@ -214,7 +216,7 @@ export class AzureContainerService {
       );
       
       return logs.content || '';
-    } catch (error) {
+    } catch (error: any) {
       console.warn('Could not retrieve container logs:', error.message);
       return 'Logs not available';
     }
@@ -226,7 +228,7 @@ export class AzureContainerService {
       // For now, we assume the resource group exists
       console.log(`Ensuring resource group ${name} exists in ${location}`);
       return { name, location };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating resource group:', error);
       throw new Error(`Failed to create resource group: ${error.message}`);
     }

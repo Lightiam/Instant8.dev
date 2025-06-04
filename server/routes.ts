@@ -173,76 +173,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // In production, this would use Azure SDK to create container
-      const azureContainerSpec = {
-        containerGroupName: name,
-        containerName: name,
-        image: image,
-        resourceGroup: resourceGroup,
-        location: location,
-        cpu: cpu || 1,
-        memoryInGb: memory || 1,
-        ports: ports || [80],
-        environmentVariables: environmentVariables || {},
-        command: command || [],
-        restartPolicy: "Always",
-        osType: "Linux"
-      };
-
-      // This is where real Azure deployment would happen:
-      /*
-      const containerInstancesClient = new ContainerInstanceManagementClient(
-        credential,
-        subscriptionId
-      );
+      // Real Azure Container Instance deployment
+      const azureService = getAzureService();
       
-      const containerGroup = await containerInstancesClient.containerGroups.beginCreateOrUpdate(
-        resourceGroup,
+      const containerSpec = {
         name,
-        {
-          location: location,
-          containers: [{
-            name: name,
-            image: image,
-            resources: {
-              requests: {
-                cpu: cpu,
-                memoryInGb: memory
-              }
-            },
-            ports: ports.map(port => ({ port, protocol: 'TCP' })),
-            environmentVariables: Object.entries(environmentVariables).map(([name, value]) => ({
-              name, value
-            })),
-            command: command.length > 0 ? command : undefined
-          }],
-          osType: 'Linux',
-          restartPolicy: 'Always',
-          ipAddress: {
-            type: 'Public',
-            ports: ports.map(port => ({ port, protocol: 'TCP' }))
-          }
-        }
-      );
-      */
-
-      // Return deployment confirmation
-      const deploymentResult = {
-        id: `aci-${name}-${Date.now()}`,
-        name: name,
-        image: image,
-        status: "pending",
-        resourceGroup: resourceGroup,
-        location: location,
-        cpu: cpu,
-        memory: memory,
-        ports: ports,
-        createdAt: new Date().toISOString(),
-        azureSpec: azureContainerSpec
+        image,
+        resourceGroup,
+        location,
+        cpu: cpu || 1,
+        memory: memory || 1,
+        ports: ports || [80],
+        environmentVariables,
+        command
       };
+
+      const deploymentResult = await azureService.createContainer(containerSpec);
 
       res.status(201).json(deploymentResult);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Azure container deployment error:", error);
       res.status(500).json({ 
         message: "Failed to deploy container to Azure", 
@@ -251,36 +200,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/azure/containers/:id/stop", async (req, res) => {
+  app.get("/api/azure/containers/:resourceGroup/:name", async (req, res) => {
     try {
-      const { id } = req.params;
+      const azureService = getAzureService();
+      const { resourceGroup, name } = req.params;
       
-      // In production, this would call Azure API to stop the container
-      // const result = await containerInstancesClient.containerGroups.stop(resourceGroup, containerGroupName);
-      
-      res.json({ 
-        message: "Container stop initiated",
-        containerId: id,
-        status: "stopping"
-      });
-    } catch (error) {
-      res.status(500).json({ message: "Failed to stop container" });
+      const container = await azureService.getContainer(resourceGroup, name);
+      res.json(container);
+    } catch (error: any) {
+      console.error("Error getting Azure container:", error);
+      res.status(500).json({ error: error.message || "Failed to get container" });
     }
   });
 
-  app.delete("/api/azure/containers/:id", async (req, res) => {
+  app.post("/api/azure/containers/:resourceGroup/:name/stop", async (req, res) => {
     try {
-      const { id } = req.params;
+      const azureService = getAzureService();
+      const { resourceGroup, name } = req.params;
       
-      // In production, this would call Azure API to delete the container
-      // const result = await containerInstancesClient.containerGroups.beginDelete(resourceGroup, containerGroupName);
+      const result = await azureService.stopContainer(resourceGroup, name);
+      res.json(result);
+    } catch (error: any) {
+      console.error("Error stopping Azure container:", error);
+      res.status(500).json({ error: error.message || "Failed to stop container" });
+    }
+  });
+
+  app.post("/api/azure/containers/:resourceGroup/:name/restart", async (req, res) => {
+    try {
+      const azureService = getAzureService();
+      const { resourceGroup, name } = req.params;
       
-      res.json({ 
-        message: "Container deletion initiated",
-        containerId: id
-      });
-    } catch (error) {
-      res.status(500).json({ message: "Failed to delete container" });
+      const result = await azureService.restartContainer(resourceGroup, name);
+      res.json(result);
+    } catch (error: any) {
+      console.error("Error restarting Azure container:", error);
+      res.status(500).json({ error: error.message || "Failed to restart container" });
+    }
+  });
+
+  app.delete("/api/azure/containers/:resourceGroup/:name", async (req, res) => {
+    try {
+      const azureService = getAzureService();
+      const { resourceGroup, name } = req.params;
+      
+      const result = await azureService.deleteContainer(resourceGroup, name);
+      res.json(result);
+    } catch (error: any) {
+      console.error("Error deleting Azure container:", error);
+      res.status(500).json({ error: error.message || "Failed to delete container" });
     }
   });
 
