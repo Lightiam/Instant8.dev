@@ -279,47 +279,53 @@ export default function ChatWorkspace() {
               className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}
             >
               <div
-                className={`max-w-[80%] p-4 rounded-xl ${
+                className={`max-w-[85%] p-4 rounded-2xl ${
                   message.isUser
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-blue-600 text-white ml-auto'
                     : 'bg-slate-800 text-slate-100'
                 }`}
               >
                 <div className="flex items-start space-x-3">
-                  {message.isUser ? (
-                    <User className="w-5 h-5 mt-1 flex-shrink-0" />
-                  ) : (
-                    <Bot className="w-5 h-5 mt-1 flex-shrink-0" />
+                  {!message.isUser && (
+                    <Bot className="w-6 h-6 mt-1 flex-shrink-0 text-slate-400" />
                   )}
-                  <div className="flex-1">
-                    <p className="whitespace-pre-wrap">{message.content}</p>
+                  <div className="flex-1 min-w-0">
+                    <p className="whitespace-pre-wrap leading-relaxed">{message.content}</p>
                     {message.code && (
-                      <div className="mt-4">
-                        <div className="flex items-center justify-between mb-3">
-                          <span className="text-sm font-medium text-slate-300">
+                      <div className="mt-6">
+                        <div className="flex items-center justify-between mb-4">
+                          <span className="text-sm font-medium text-slate-300 bg-slate-700 px-3 py-1 rounded-full">
                             Generated {message.codeType} Code
                           </span>
                           <div className="flex space-x-2">
-                            <Button size="sm" variant="outline" className="border-slate-600 text-slate-300 hover:bg-slate-700">
-                              <Copy className="w-4 h-4 mr-2" />
+                            <Button size="sm" variant="outline" className="border-slate-600 text-slate-300 hover:bg-slate-700 h-9">
+                              <Copy className="w-4 h-4 mr-1" />
                               Copy
                             </Button>
-                            <Button size="sm" variant="outline" className="border-slate-600 text-slate-300 hover:bg-slate-700">
-                              <Download className="w-4 h-4 mr-2" />
+                            <Button size="sm" variant="outline" className="border-slate-600 text-slate-300 hover:bg-slate-700 h-9">
+                              <Download className="w-4 h-4 mr-1" />
                               Download
                             </Button>
-                            <Button size="sm" className="bg-green-600 hover:bg-green-700">
-                              <Play className="w-4 h-4 mr-2" />
+                            <Button size="sm" className="bg-green-600 hover:bg-green-700 h-9">
+                              <Play className="w-4 h-4 mr-1" />
                               Deploy to Cloud
                             </Button>
                           </div>
                         </div>
-                        <pre className="bg-slate-900 text-green-400 p-4 rounded-lg overflow-x-auto text-sm border border-slate-700">
-                          <code>{message.code}</code>
-                        </pre>
+                        <div className="bg-slate-900 border border-slate-700 rounded-xl overflow-hidden">
+                          <div className="bg-slate-800 px-4 py-2 border-b border-slate-700">
+                            <span className="text-xs text-slate-400 font-mono">terraform</span>
+                          </div>
+                          <pre className="text-green-400 p-4 overflow-x-auto text-sm leading-relaxed">
+                            <code>{message.code}</code>
+                          </pre>
+                        </div>
                       </div>
                     )}
                   </div>
+                  {message.isUser && (
+                    <User className="w-6 h-6 mt-1 flex-shrink-0" />
+                  )}
                 </div>
               </div>
             </div>
