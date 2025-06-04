@@ -1,10 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Send, Bot, User, Code, Play, Settings, Copy, Download } from "lucide-react";
+import { Send, Bot, User, Code, Play, Settings, Copy, Download, ArrowLeft } from "lucide-react";
 import { useWebSocket } from "@/hooks/use-websocket";
 import { EnvironmentConfig } from "@/components/env-config";
 
@@ -30,88 +27,79 @@ const templates: ConversationTemplate[] = [
     id: "web-app",
     title: "Deploy Web App",
     description: "Create and deploy a web application",
-    color: "bg-blue-500",
+    color: "bg-blue-500 hover:bg-blue-600",
     prompt: "I want to deploy a web application to Azure"
   },
   {
     id: "database",
     title: "Database Setup",
     description: "Set up cloud database infrastructure",
-    color: "bg-green-500", 
+    color: "bg-green-500 hover:bg-green-600", 
     prompt: "Help me set up a PostgreSQL database on Azure"
   },
   {
     id: "container",
     title: "Container Deployment",
     description: "Deploy containerized applications",
-    color: "bg-purple-500",
+    color: "bg-purple-500 hover:bg-purple-600",
     prompt: "Deploy a Docker container to Azure Container Instances"
   },
   {
     id: "kubernetes",
     title: "Kubernetes Cluster",
-    description: "Create and manage Kubernetes infrastructure",
-    color: "bg-orange-500",
-    prompt: "Set up an Azure Kubernetes Service cluster"
+    description: "Set up Kubernetes infrastructure",
+    color: "bg-orange-500 hover:bg-orange-600",
+    prompt: "Create a Kubernetes cluster on Azure AKS"
   },
   {
     id: "storage",
     title: "Cloud Storage",
     description: "Configure cloud storage solutions",
-    color: "bg-pink-500",
-    prompt: "Create Azure Blob Storage for my application"
+    color: "bg-red-500 hover:bg-red-600",
+    prompt: "Set up Azure Blob Storage with CDN"
   },
   {
-    id: "networking",
-    title: "Network Setup",
-    description: "Configure virtual networks and security",
-    color: "bg-cyan-500",
-    prompt: "Set up Azure Virtual Network with subnets"
+    id: "network",
+    title: "Network Config",
+    description: "Design network infrastructure",
+    color: "bg-cyan-500 hover:bg-cyan-600",
+    prompt: "Create a virtual network with subnets on Azure"
   },
   {
     id: "monitoring",
-    title: "Monitoring & Alerts",
-    description: "Set up monitoring and alerting",
-    color: "bg-yellow-500",
-    prompt: "Configure Azure Monitor and alerts for my infrastructure"
+    title: "Monitoring Setup",
+    description: "Add monitoring and alerts",
+    color: "bg-yellow-500 hover:bg-yellow-600",
+    prompt: "Set up monitoring and alerting for my infrastructure"
   },
   {
-    id: "custom",
-    title: "Custom Solution",
-    description: "Build custom cloud infrastructure",
-    color: "bg-indigo-500",
-    prompt: "Help me design a custom cloud architecture"
+    id: "security",
+    title: "Security Config",
+    description: "Implement security best practices",
+    color: "bg-pink-500 hover:bg-pink-600",
+    prompt: "Add security groups and access controls to my infrastructure"
   }
 ];
 
 export default function ChatWorkspace() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [inputValue, setInputValue] = useState("");
-  const [activeTab, setActiveTab] = useState("chat");
-  const [generatedCode, setGeneratedCode] = useState("");
-  const [codeType, setCodeType] = useState("terraform");
-  const [showSettings, setShowSettings] = useState(false);
-  const [deploymentId, setDeploymentId] = useState<string | null>(null);
-  const [deploymentStatus, setDeploymentStatus] = useState<any>(null);
-  const [isDeploying, setIsDeploying] = useState(false);
+  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [showEnvConfig, setShowEnvConfig] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const { sendMessage, isConnected } = useWebSocket((message) => {
-    if (message.type === "chat_response") {
-      setMessages(prev => [...prev, {
+  const { sendMessage } = useWebSocket((message) => {
+    if (message.type === 'chat-response') {
+      const botMessage: ChatMessage = {
         id: Date.now().toString(),
         content: message.message,
         isUser: false,
-        timestamp: new Date(message.timestamp),
+        timestamp: new Date(),
         code: message.code,
         codeType: message.codeType
-      }]);
-      
-      if (message.code) {
-        setGeneratedCode(message.code);
-        setCodeType(message.codeType || "terraform");
-        setActiveTab("code");
-      }
+      };
+      setMessages(prev => [...prev, botMessage]);
+      setIsLoading(false);
     }
   });
 
@@ -123,333 +111,277 @@ export default function ChatWorkspace() {
     scrollToBottom();
   }, [messages]);
 
-  const handleSendMessage = (customMessage?: string) => {
-    const messageText = customMessage || inputValue;
-    if (!messageText.trim()) return;
+  const handleSendMessage = async () => {
+    if (!input.trim()) return;
 
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
-      content: messageText,
+      content: input,
       isUser: true,
-      timestamp: new Date(),
+      timestamp: new Date()
     };
 
     setMessages(prev => [...prev, userMessage]);
-    
-    sendMessage({
-      type: "chat_message",
-      content: messageText,
-    });
+    setInput("");
+    setIsLoading(true);
 
-    setInputValue("");
+    // Send message via WebSocket
+    sendMessage({
+      type: 'chat-message',
+      message: input
+    });
+  };
+
+  const handleTemplateClick = (template: ConversationTemplate) => {
+    setInput(template.prompt);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
     }
   };
 
-  const handleTemplateClick = (template: ConversationTemplate) => {
-    handleSendMessage(template.prompt);
-  };
-
-  const copyCode = () => {
-    navigator.clipboard.writeText(generatedCode);
-  };
-
-  const deployInfrastructure = async () => {
-    if (!generatedCode) return;
-    
-    setIsDeploying(true);
-    try {
-      const response = await fetch('/api/deploy', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          code: generatedCode,
-          codeType,
-          provider: 'azure',
-          resourceType: 'container'
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('Deployment failed');
-      }
-
-      const result = await response.json();
-      setDeploymentId(result.deploymentId);
-      
-      // Start polling for deployment status
-      pollDeploymentStatus(result.deploymentId);
-      
-    } catch (error: any) {
-      console.error('Deployment error:', error);
-      alert('Deployment failed: ' + error.message);
-    } finally {
-      setIsDeploying(false);
-    }
-  };
-
-  const pollDeploymentStatus = async (id: string) => {
-    try {
-      const response = await fetch(`/api/deploy/${id}/status`);
-      if (response.ok) {
-        const status = await response.json();
-        setDeploymentStatus(status);
-        
-        if (status.status === 'running' || status.status === 'pending') {
-          setTimeout(() => pollDeploymentStatus(id), 3000);
-        }
-      }
-    } catch (error) {
-      console.error('Failed to check deployment status:', error);
-    }
-  };
-
-  const downloadCode = () => {
-    const blob = new Blob([generatedCode], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `infrastructure.${codeType === 'terraform' ? 'tf' : 'ts'}`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
-  return (
-    <div className="h-screen bg-slate-950 text-white">
-      {/* Header */}
-      <header className="bg-slate-900 border-b border-slate-700 px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-semibold text-white">Chat Workspace</h1>
-            <p className="text-sm text-slate-400">Generate Infrastructure-as-Code through conversation</p>
-          </div>
-          <div className="flex items-center space-x-4">
-            <Button 
-              variant="outline" 
-              className="border-slate-600"
-              onClick={() => setShowSettings(!showSettings)}
+  // Show conversation starter when no messages
+  if (messages.length === 0) {
+    return (
+      <div className="min-h-screen bg-slate-900 text-white">
+        {/* Header */}
+        <div className="border-b border-slate-800 px-6 py-4">
+          <div className="flex items-center justify-between max-w-6xl mx-auto">
+            <div className="flex items-center space-x-4">
+              <button 
+                onClick={() => window.location.href = '/dashboard'}
+                className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </button>
+              <div>
+                <h1 className="text-xl font-semibold">New Chat</h1>
+                <p className="text-sm text-slate-400">Infrastructure as Code Generation</p>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowEnvConfig(!showEnvConfig)}
+              className="border-slate-700 text-slate-300 hover:bg-slate-800"
             >
               <Settings className="w-4 h-4 mr-2" />
-              Configure
+              Environment
             </Button>
           </div>
         </div>
-      </header>
 
-      <div className="flex h-[calc(100vh-80px)]">
-        {/* Left Sidebar - Templates */}
-        <div className="w-80 bg-slate-900 border-r border-slate-700 p-4">
-          <h2 className="text-lg font-semibold mb-4">Start Conversation</h2>
-          <div className="grid grid-cols-2 gap-3">
+        {/* Main Content */}
+        <div className="max-w-4xl mx-auto px-6 py-12">
+          {/* Title */}
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4">Start Conversation</h2>
+            <p className="text-slate-400 text-lg">Generate and deploy cloud infrastructure through conversation</p>
+          </div>
+
+          {/* Template Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
             {templates.map((template) => (
-              <Card 
+              <button
                 key={template.id}
-                className="cursor-pointer hover:bg-slate-800 transition-colors bg-slate-950 border-slate-700"
                 onClick={() => handleTemplateClick(template)}
+                className={`${template.color} p-6 rounded-xl text-white text-left hover:scale-105 transition-all duration-200 shadow-lg`}
               >
-                <CardContent className="p-3">
-                  <div className={`w-8 h-8 rounded-lg ${template.color} mb-2 flex items-center justify-center`}>
-                    <div className="w-4 h-4 bg-white rounded-sm"></div>
-                  </div>
-                  <h3 className="font-medium text-sm text-white mb-1">{template.title}</h3>
-                  <p className="text-xs text-slate-400">{template.description}</p>
-                </CardContent>
-              </Card>
+                <h3 className="font-semibold mb-2">{template.title}</h3>
+                <p className="text-sm opacity-90">{template.description}</p>
+              </button>
             ))}
           </div>
-        </div>
 
-        {/* Main Content Area */}
-        <div className="flex-1 flex flex-col">
-          {showSettings ? (
-            <EnvironmentConfig />
-          ) : (
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-              <TabsList className="grid grid-cols-2 w-96 mx-6 mt-4 bg-slate-800">
-                <TabsTrigger value="chat" className="data-[state=active]:bg-slate-700">Chat</TabsTrigger>
-                <TabsTrigger value="code" className="data-[state=active]:bg-slate-700">Generated Code</TabsTrigger>
-              </TabsList>
+          {/* Input Area */}
+          <div className="relative">
+            <Input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="What infrastructure would you like to deploy?"
+              className="w-full h-14 px-6 pr-14 bg-slate-800 border-slate-700 text-white placeholder-slate-400 rounded-xl text-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              disabled={isLoading}
+            />
+            <Button 
+              onClick={handleSendMessage} 
+              disabled={!input.trim() || isLoading}
+              className="absolute right-2 top-2 h-10 w-10 bg-blue-600 hover:bg-blue-700 rounded-lg p-0"
+            >
+              <Send className="w-5 h-5" />
+            </Button>
+          </div>
 
-            <TabsContent value="chat" className="flex-1 flex flex-col mt-4">
-              {/* Chat Messages */}
-              <div className="flex-1 overflow-auto px-6 pb-4">
-                {messages.length === 0 ? (
-                  <div className="flex items-center justify-center h-full">
-                    <div className="text-center text-slate-400">
-                      <Bot className="w-12 h-12 mx-auto mb-4 text-slate-500" />
-                      <h3 className="text-lg font-medium mb-2">Welcome to Infrastructure Chat</h3>
-                      <p>Choose a template from the sidebar or start typing to generate cloud infrastructure code</p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {messages.map((message) => (
-                      <div key={message.id} className="flex items-start space-x-3">
-                        {message.isUser ? (
-                          <>
-                            <div className="flex-1 flex justify-end">
-                              <div className="bg-primary rounded-lg p-4 max-w-2xl">
-                                <p className="text-sm text-white whitespace-pre-line">{message.content}</p>
-                              </div>
-                            </div>
-                            <div className="w-8 h-8 bg-slate-600 rounded-full flex items-center justify-center flex-shrink-0">
-                              <User className="text-white w-4 h-4" />
-                            </div>
-                          </>
-                        ) : (
-                          <>
-                            <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
-                              <Bot className="text-white w-4 h-4" />
-                            </div>
-                            <div className="bg-slate-800 rounded-lg p-4 max-w-2xl">
-                              <p className="text-sm text-white whitespace-pre-line">{message.content}</p>
-                              {message.code && (
-                                <div className="mt-3 p-3 bg-slate-900 rounded border border-slate-600">
-                                  <div className="flex items-center justify-between mb-2">
-                                    <Badge variant="outline" className="text-xs">
-                                      {message.codeType === 'terraform' ? 'Terraform' : 'Pulumi'}
-                                    </Badge>
-                                    <Button size="sm" variant="ghost" onClick={() => setActiveTab("code")}>
-                                      <Code className="w-3 h-3 mr-1" />
-                                      View Code
-                                    </Button>
-                                  </div>
-                                  <pre className="text-xs text-slate-300 overflow-x-auto">
-                                    {message.code.slice(0, 200)}...
-                                  </pre>
-                                </div>
-                              )}
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    ))}
-                    <div ref={messagesEndRef} />
-                  </div>
-                )}
-              </div>
-
-              {/* Input Area */}
-              <div className="border-t border-slate-700 p-6">
-                <div className="flex space-x-4">
-                  <Input
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    placeholder="Describe the infrastructure you want to create..."
-                    className="flex-1 bg-slate-800 border-slate-600 focus:border-primary text-white"
-                  />
-                  <Button 
-                    onClick={() => handleSendMessage()}
-                    className="bg-primary hover:bg-primary/90"
-                    disabled={!isConnected}
+          {/* Environment Configuration Modal */}
+          {showEnvConfig && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+              <div className="bg-slate-800 rounded-xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xl font-semibold">Environment Setup</h3>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowEnvConfig(false)}
+                    className="text-slate-400 hover:text-white"
                   >
-                    <Send className="w-4 h-4" />
+                    ✕
                   </Button>
                 </div>
+                <EnvironmentConfig />
               </div>
-            </TabsContent>
-
-            <TabsContent value="code" className="flex-1 flex flex-col mt-4">
-              {/* Code Editor */}
-              <div className="flex-1 flex flex-col">
-                <div className="flex items-center justify-between px-6 pb-4">
-                  <div className="flex items-center space-x-4">
-                    <Badge variant="outline" className="bg-slate-800 border-slate-600">
-                      {codeType === 'terraform' ? 'Terraform Configuration' : 'Pulumi Code'}
-                    </Badge>
-                    <div className="flex space-x-2">
-                      <Button
-                        size="sm"
-                        variant={codeType === 'terraform' ? 'default' : 'outline'}
-                        onClick={() => setCodeType('terraform')}
-                      >
-                        Terraform
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant={codeType === 'pulumi' ? 'default' : 'outline'}
-                        onClick={() => setCodeType('pulumi')}
-                      >
-                        Pulumi
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="flex space-x-2">
-                    <Button size="sm" variant="outline" onClick={copyCode}>
-                      <Copy className="w-3 h-3 mr-1" />
-                      Copy
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={downloadCode}>
-                      <Download className="w-3 h-3 mr-1" />
-                      Download
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      className="bg-green-600 hover:bg-green-700"
-                      onClick={deployInfrastructure}
-                      disabled={isDeploying || !generatedCode}
-                    >
-                      <Play className="w-3 h-3 mr-1" />
-                      {isDeploying ? 'Deploying...' : 'Deploy to Cloud'}
-                    </Button>
-                  </div>
-                </div>
-                
-                <div className="flex-1 mx-6 mb-6">
-                  <div className="h-full bg-slate-900 border border-slate-700 rounded-lg overflow-hidden">
-                    {deploymentStatus && (
-                      <div className="border-b border-slate-700 p-4 bg-slate-800">
-                        <div className="flex items-center justify-between mb-2">
-                          <h3 className="font-medium text-white">Deployment Status</h3>
-                          <div className={`px-2 py-1 rounded text-xs font-medium ${
-                            deploymentStatus.status === 'success' ? 'bg-green-500/20 text-green-400' :
-                            deploymentStatus.status === 'failed' ? 'bg-red-500/20 text-red-400' :
-                            deploymentStatus.status === 'running' ? 'bg-blue-500/20 text-blue-400' :
-                            'bg-yellow-500/20 text-yellow-400'
-                          }`}>
-                            {deploymentStatus.status.toUpperCase()}
-                          </div>
-                        </div>
-                        {deploymentStatus.logs && deploymentStatus.logs.length > 0 && (
-                          <div className="text-xs text-slate-400 max-h-20 overflow-y-auto">
-                            {deploymentStatus.logs.slice(-3).map((log: string, index: number) => (
-                              <div key={index}>{log}</div>
-                            ))}
-                          </div>
-                        )}
-                        {deploymentStatus.outputs && Object.keys(deploymentStatus.outputs).length > 0 && (
-                          <div className="mt-2 text-xs">
-                            <div className="text-green-400 font-medium">Deployment Outputs:</div>
-                            {Object.entries(deploymentStatus.outputs).map(([key, value]: [string, any]) => (
-                              <div key={key} className="text-slate-300">
-                                {key}: {typeof value === 'object' ? value.value : value}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    <pre className="h-full p-4 text-sm text-slate-300 overflow-auto">
-                      <code>{generatedCode || '# Generated code will appear here after chatting...'}</code>
-                    </pre>
-                  </div>
-                </div>
-              </div>
-            </TabsContent>
-          </Tabs>
+            </div>
           )}
         </div>
       </div>
+    );
+  }
+
+  // Show chat interface when messages exist
+  return (
+    <div className="min-h-screen bg-slate-900 text-white">
+      {/* Header */}
+      <div className="border-b border-slate-800 px-6 py-4">
+        <div className="flex items-center justify-between max-w-6xl mx-auto">
+          <div className="flex items-center space-x-4">
+            <button 
+              onClick={() => window.location.href = '/dashboard'}
+              className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <div>
+              <h1 className="text-xl font-semibold">Infrastructure Chat</h1>
+              <p className="text-sm text-slate-400">Active deployment session</p>
+            </div>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowEnvConfig(!showEnvConfig)}
+            className="border-slate-700 text-slate-300 hover:bg-slate-800"
+          >
+            <Settings className="w-4 h-4 mr-2" />
+            Environment
+          </Button>
+        </div>
+      </div>
+
+      {/* Chat Interface */}
+      <div className="max-w-4xl mx-auto h-[calc(100vh-80px)] flex flex-col">
+        {/* Messages Area */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          {messages.map((message) => (
+            <div
+              key={message.id}
+              className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}
+            >
+              <div
+                className={`max-w-[80%] p-4 rounded-xl ${
+                  message.isUser
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-slate-800 text-slate-100'
+                }`}
+              >
+                <div className="flex items-start space-x-3">
+                  {message.isUser ? (
+                    <User className="w-5 h-5 mt-1 flex-shrink-0" />
+                  ) : (
+                    <Bot className="w-5 h-5 mt-1 flex-shrink-0" />
+                  )}
+                  <div className="flex-1">
+                    <p className="whitespace-pre-wrap">{message.content}</p>
+                    {message.code && (
+                      <div className="mt-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-sm font-medium text-slate-300">
+                            Generated {message.codeType} Code
+                          </span>
+                          <div className="flex space-x-2">
+                            <Button size="sm" variant="outline" className="border-slate-600 text-slate-300 hover:bg-slate-700">
+                              <Copy className="w-4 h-4 mr-2" />
+                              Copy
+                            </Button>
+                            <Button size="sm" variant="outline" className="border-slate-600 text-slate-300 hover:bg-slate-700">
+                              <Download className="w-4 h-4 mr-2" />
+                              Download
+                            </Button>
+                            <Button size="sm" className="bg-green-600 hover:bg-green-700">
+                              <Play className="w-4 h-4 mr-2" />
+                              Deploy to Cloud
+                            </Button>
+                          </div>
+                        </div>
+                        <pre className="bg-slate-900 text-green-400 p-4 rounded-lg overflow-x-auto text-sm border border-slate-700">
+                          <code>{message.code}</code>
+                        </pre>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+          {isLoading && (
+            <div className="flex justify-start">
+              <div className="max-w-[80%] p-4 rounded-xl bg-slate-800 text-slate-100">
+                <div className="flex items-center space-x-3">
+                  <Bot className="w-5 h-5 animate-pulse" />
+                  <div className="flex space-x-1">
+                    <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"></div>
+                    <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                    <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Input Area */}
+        <div className="border-t border-slate-800 p-6">
+          <div className="relative">
+            <Input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Continue the conversation..."
+              className="w-full h-12 px-6 pr-14 bg-slate-800 border-slate-700 text-white placeholder-slate-400 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              disabled={isLoading}
+            />
+            <Button 
+              onClick={handleSendMessage} 
+              disabled={!input.trim() || isLoading}
+              className="absolute right-2 top-2 h-8 w-8 bg-blue-600 hover:bg-blue-700 rounded-lg p-0"
+            >
+              <Send className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Environment Configuration Modal */}
+      {showEnvConfig && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-800 rounded-xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-semibold">Environment Setup</h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowEnvConfig(false)}
+                className="text-slate-400 hover:text-white"
+              >
+                ✕
+              </Button>
+            </div>
+            <EnvironmentConfig />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -33,7 +33,6 @@ export function useWebSocket(onMessage: (message: WebSocketMessage) => void) {
       ws.current.onclose = () => {
         setIsConnected(false);
         console.log("WebSocket disconnected");
-        // Don't automatically reconnect to prevent infinite loops
       };
 
       ws.current.onerror = (error) => {
@@ -47,9 +46,10 @@ export function useWebSocket(onMessage: (message: WebSocketMessage) => void) {
     return () => {
       if (ws.current) {
         ws.current.close();
+        ws.current = null;
       }
     };
-  }, [onMessage]);
+  }, []);
 
   const sendMessage = (message: WebSocketMessage) => {
     if (ws.current && ws.current.readyState === WebSocket.OPEN) {
