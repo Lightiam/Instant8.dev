@@ -90,6 +90,7 @@ export default function ChatWorkspace() {
   const [activeTab, setActiveTab] = useState("chat");
   const [generatedCode, setGeneratedCode] = useState("");
   const [codeType, setCodeType] = useState("terraform");
+  const [showSettings, setShowSettings] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { sendMessage, isConnected } = useWebSocket((message) => {
@@ -177,7 +178,11 @@ export default function ChatWorkspace() {
             <p className="text-sm text-slate-400">Generate Infrastructure-as-Code through conversation</p>
           </div>
           <div className="flex items-center space-x-4">
-            <Button variant="outline" className="border-slate-600">
+            <Button 
+              variant="outline" 
+              className="border-slate-600"
+              onClick={() => setShowSettings(!showSettings)}
+            >
               <Settings className="w-4 h-4 mr-2" />
               Configure
             </Button>
@@ -210,11 +215,14 @@ export default function ChatWorkspace() {
 
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-            <TabsList className="grid grid-cols-2 w-96 mx-6 mt-4 bg-slate-800">
-              <TabsTrigger value="chat" className="data-[state=active]:bg-slate-700">Chat</TabsTrigger>
-              <TabsTrigger value="code" className="data-[state=active]:bg-slate-700">Generated Code</TabsTrigger>
-            </TabsList>
+          {showSettings ? (
+            <EnvironmentConfig />
+          ) : (
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
+              <TabsList className="grid grid-cols-2 w-96 mx-6 mt-4 bg-slate-800">
+                <TabsTrigger value="chat" className="data-[state=active]:bg-slate-700">Chat</TabsTrigger>
+                <TabsTrigger value="code" className="data-[state=active]:bg-slate-700">Generated Code</TabsTrigger>
+              </TabsList>
 
             <TabsContent value="chat" className="flex-1 flex flex-col mt-4">
               {/* Chat Messages */}
@@ -347,6 +355,7 @@ export default function ChatWorkspace() {
               </div>
             </TabsContent>
           </Tabs>
+          )}
         </div>
       </div>
     </div>
