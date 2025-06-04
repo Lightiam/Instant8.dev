@@ -7,6 +7,7 @@ import { z } from "zod";
 import { getAzureService } from "./azure-service";
 import { codeGenerator } from "./code-generator";
 import { deploymentService } from "./deployment-service";
+import { v4 as uuidv4 } from 'uuid';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
@@ -316,18 +317,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Deployment API routes
   app.post("/api/deploy", async (req, res) => {
     try {
-      const { code, codeType, provider, resourceType } = req.body;
+      const { code, codeType, provider, resourceType, userSubscriptionId } = req.body;
       
       if (!code || !codeType || !provider) {
         return res.status(400).json({ error: "Missing required fields" });
       }
 
-      const deploymentId = await deploymentService.deployInfrastructure({
+      // Use SaaS deployment service for simplified user experience
+      const { saasDeploymentService } = await import('./saas-deployment-service');
+      
+      const deploymentId = await saasDeploymentService.deployViaServiceProvider({
         code,
         codeType,
         provider,
         resourceType,
-        deploymentId: ""
+        userSubscriptionId, // Optional: deploy to user's own subscription
+        deploymentId: uuidv4()
       });
 
       res.json({ deploymentId, status: "initiated" });
