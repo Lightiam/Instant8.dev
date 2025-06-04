@@ -1,0 +1,106 @@
+{
+	"id": "28db8da1-7972-40ce-b25e-d30a4419340a",
+	"deletedDateTime": null,
+	"appId": "b55f930f-537f-4865-bbc5-43dd4e1609f9",
+	"applicationTemplateId": null,
+	"disabledByMicrosoftStatus": null,
+	"createdDateTime": "2025-06-01T06:40:31Z",
+	"displayName": "imoleaurora_gmail.com#EXT#@imoleauroragmail.onmicrosoft.com",
+	"description": null,
+	"groupMembershipClaims": null,
+	"identifierUris": [
+		"api://b55f930f-537f-4865-bbc5-43dd4e1609f9"
+	],
+	"isDeviceOnlyAuthSupported": null,
+	"isFallbackPublicClient": true,
+	"nativeAuthenticationApisEnabled": null,
+	"notes": null,
+	"publisherDomain": "imoleauroragmail.onmicrosoft.com",
+	"serviceManagementReference": null,
+	"signInAudience": "AzureADMultipleOrgs",
+	"tags": [],
+	"tokenEncryptionKeyId": null,
+	"samlMetadataUrl": null,
+	"defaultRedirectUri": null,
+	"certification": null,
+	"optionalClaims": null,
+	"servicePrincipalLockConfiguration": null,
+	"requestSignatureVerification": null,
+	"addIns": [],
+	"api": {
+		"acceptMappedClaims": null,
+		"knownClientApplications": [],
+		"requestedAccessTokenVersion": null,
+		"oauth2PermissionScopes": [],
+		"preAuthorizedApplications": []
+	},
+	"appRoles": [
+		{
+			"allowedMemberTypes": [
+				"User",
+				"Application"
+			],
+			"description": "Allow apps to execute service",
+			"displayName": "imoleaurora_gmail.com",
+			"id": "911b5f06-638e-4eb2-9d90-1c7ade7d800c",
+			"isEnabled": true,
+			"origin": "Application",
+			"value": "Allow"
+		}
+	],
+	"info": {
+		"logoUrl": null,
+		"marketingUrl": null,
+		"privacyStatementUrl": null,
+		"supportUrl": null,
+		"termsOfServiceUrl": null
+	},
+	"keyCredentials": [],
+	"parentalControlSettings": {
+		"countriesBlockedForMinors": [],
+		"legalAgeGroupRule": "Allow"
+	},
+	"passwordCredentials": [
+		{
+			"customKeyIdentifier": null,
+			"displayName": "rbac",
+			"endDateTime": "2026-06-01T06:40:30Z",
+			"hint": "EDo",
+			"keyId": "03524f7b-4361-4fca-9c77-123a50d75632",
+			"secretText": null,
+			"startDateTime": "2025-06-01T06:40:30Z"
+		}
+	],
+	"publicClient": {
+		"redirectUris": []
+	},
+	"requiredResourceAccess": [
+		{
+			"resourceAppId": "797f4846-ba00-4fd7-ba43-dac1f8f63013",
+			"resourceAccess": [
+				{
+					"id": "41094075-9dad-400e-a0bd-54e686782033",
+					"type": "Scope"
+				}
+			]
+		}
+	],
+	"verifiedPublisher": {
+		"displayName": null,
+		"verifiedPublisherId": null,
+		"addedDateTime": null
+	},
+	"web": {
+		"homePageUrl": null,
+		"logoutUrl": null,
+		"redirectUris": [],
+		"implicitGrantSettings": {
+			"enableAccessTokenIssuance": false,
+			"enableIdTokenIssuance": false
+		},
+		"redirectUriSettings": []
+	},
+	"spa": {
+		"redirectUris": []
+	}
+}
