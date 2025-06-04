@@ -6,6 +6,7 @@ import { insertChatMessageSchema, insertDeploymentSchema } from "@shared/schema"
 import { z } from "zod";
 import { getAzureService } from "./azure-service";
 import { codeGenerator } from "./code-generator";
+import { deploymentService } from "./deployment-service";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
@@ -252,6 +253,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Error deleting Azure container:", error);
       res.status(500).json({ error: error.message || "Failed to delete container" });
+    }
+  });
+
+  // Deployment API routes
+  app.post("/api/deploy", async (req, res) => {
+    try {
+      const { code, codeType, provider, resourceType } = req.body;
+      
+      if (!code || !codeType || !provider) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+
+      const deploymentId = await deploymentService.deployInfrastructure({
+        code,
+        codeType,
+        provider,
+        resourceType,
+        deploymentId: ""
+      });
+
+      res.json({ deploymentId, status: "initiated" });
+    } catch (error: any) {
+      console.error("Deployment error:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/deploy/:deploymentId/status", async (req, res) => {
+    try {
+      const { deploymentId } = req.params;
+      const deployment = deploymentService.getDeploymentStatus(deploymentId);
+      
+      if (!deployment) {
+        return res.status(404).json({ error: "Deployment not found" });
+      }
+
+      res.json(deployment);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.delete("/api/deploy/:deploymentId", async (req, res) => {
+    try {
+      const { deploymentId } = req.params;
+      await deploymentService.destroyInfrastructure(deploymentId);
+      res.json({ message: "Infrastructure destruction initiated" });
+    } catch (error: any) {
+      console.error("Destroy error:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/deployments", async (req, res) => {
+    try {
+      const deployments = deploymentService.getAllDeployments();
+      res.json(deployments);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
     }
   });
 

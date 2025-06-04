@@ -91,6 +91,9 @@ export default function ChatWorkspace() {
   const [generatedCode, setGeneratedCode] = useState("");
   const [codeType, setCodeType] = useState("terraform");
   const [showSettings, setShowSettings] = useState(false);
+  const [deploymentId, setDeploymentId] = useState<string | null>(null);
+  const [deploymentStatus, setDeploymentStatus] = useState<any>(null);
+  const [isDeploying, setIsDeploying] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { sendMessage, isConnected } = useWebSocket((message) => {
@@ -154,6 +157,58 @@ export default function ChatWorkspace() {
 
   const copyCode = () => {
     navigator.clipboard.writeText(generatedCode);
+  };
+
+  const deployInfrastructure = async () => {
+    if (!generatedCode) return;
+    
+    setIsDeploying(true);
+    try {
+      const response = await fetch('/api/deploy', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          code: generatedCode,
+          codeType,
+          provider: 'azure',
+          resourceType: 'container'
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Deployment failed');
+      }
+
+      const result = await response.json();
+      setDeploymentId(result.deploymentId);
+      
+      // Start polling for deployment status
+      pollDeploymentStatus(result.deploymentId);
+      
+    } catch (error: any) {
+      console.error('Deployment error:', error);
+      alert('Deployment failed: ' + error.message);
+    } finally {
+      setIsDeploying(false);
+    }
+  };
+
+  const pollDeploymentStatus = async (id: string) => {
+    try {
+      const response = await fetch(`/api/deploy/${id}/status`);
+      if (response.ok) {
+        const status = await response.json();
+        setDeploymentStatus(status);
+        
+        if (status.status === 'running' || status.status === 'pending') {
+          setTimeout(() => pollDeploymentStatus(id), 3000);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to check deployment status:', error);
+    }
   };
 
   const downloadCode = () => {
@@ -338,15 +393,52 @@ export default function ChatWorkspace() {
                       <Download className="w-3 h-3 mr-1" />
                       Download
                     </Button>
-                    <Button size="sm" className="bg-green-600 hover:bg-green-700">
+                    <Button 
+                      size="sm" 
+                      className="bg-green-600 hover:bg-green-700"
+                      onClick={deployInfrastructure}
+                      disabled={isDeploying || !generatedCode}
+                    >
                       <Play className="w-3 h-3 mr-1" />
-                      Deploy
+                      {isDeploying ? 'Deploying...' : 'Deploy to Cloud'}
                     </Button>
                   </div>
                 </div>
                 
                 <div className="flex-1 mx-6 mb-6">
                   <div className="h-full bg-slate-900 border border-slate-700 rounded-lg overflow-hidden">
+                    {deploymentStatus && (
+                      <div className="border-b border-slate-700 p-4 bg-slate-800">
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="font-medium text-white">Deployment Status</h3>
+                          <div className={`px-2 py-1 rounded text-xs font-medium ${
+                            deploymentStatus.status === 'success' ? 'bg-green-500/20 text-green-400' :
+                            deploymentStatus.status === 'failed' ? 'bg-red-500/20 text-red-400' :
+                            deploymentStatus.status === 'running' ? 'bg-blue-500/20 text-blue-400' :
+                            'bg-yellow-500/20 text-yellow-400'
+                          }`}>
+                            {deploymentStatus.status.toUpperCase()}
+                          </div>
+                        </div>
+                        {deploymentStatus.logs && deploymentStatus.logs.length > 0 && (
+                          <div className="text-xs text-slate-400 max-h-20 overflow-y-auto">
+                            {deploymentStatus.logs.slice(-3).map((log: string, index: number) => (
+                              <div key={index}>{log}</div>
+                            ))}
+                          </div>
+                        )}
+                        {deploymentStatus.outputs && Object.keys(deploymentStatus.outputs).length > 0 && (
+                          <div className="mt-2 text-xs">
+                            <div className="text-green-400 font-medium">Deployment Outputs:</div>
+                            {Object.entries(deploymentStatus.outputs).map(([key, value]: [string, any]) => (
+                              <div key={key} className="text-slate-300">
+                                {key}: {typeof value === 'object' ? value.value : value}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
                     <pre className="h-full p-4 text-sm text-slate-300 overflow-auto">
                       <code>{generatedCode || '# Generated code will appear here after chatting...'}</code>
                     </pre>
