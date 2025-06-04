@@ -93,13 +93,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const response = await generateChatResponse(message.content.toLowerCase());
           
           // Update with response
-          await storage.updateChatResponse(chatMessage.id, response);
+          await storage.updateChatResponse(chatMessage.id, response.message);
 
           // Send response back to client
           if (ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify({
               type: 'chat_response',
-              message: response,
+              message: response.message,
+              code: response.code,
+              codeType: response.codeType,
               timestamp: new Date().toISOString()
             }));
           }
@@ -302,7 +304,7 @@ async function generateChatResponse(message: string): Promise<{ message: string;
         const containers = await azureService.listContainers();
         
         if (containers.length === 0) {
-          return "No Azure containers found in your subscription.\n\nWould you like to deploy one? Try: 'deploy nginx to azure'";
+          return { message: "No Azure containers found in your subscription.\n\nWould you like to deploy one? Try: 'deploy nginx to azure'" };
         }
         
         let response = "Your Azure Container Instances:\n\n";
@@ -310,9 +312,9 @@ async function generateChatResponse(message: string): Promise<{ message: string;
           response += `• ${container.name} (${container.status})\n  Image: ${container.image}\n  Location: ${container.location}\n  IP: ${container.publicIp || 'Not assigned'}\n\n`;
         });
         
-        return response;
+        return { message: response };
       } catch (error: any) {
-        return `Error fetching containers: ${error.message}\n\nPlease ensure your Azure credentials are configured in Settings.`;
+        return { message: `Error fetching containers: ${error.message}\n\nPlease ensure your Azure credentials are configured in Settings.` };
       }
     }
     
@@ -326,40 +328,40 @@ async function generateChatResponse(message: string): Promise<{ message: string;
         const stopped = containers.filter(c => c.status === 'stopped').length;
         const pending = containers.filter(c => c.status === 'pending').length;
         
-        return `Azure Infrastructure Status:\n\n• Running: ${running} containers\n• Stopped: ${stopped} containers\n• Pending: ${pending} containers\n• Total: ${containers.length} containers\n\nNeed details on a specific container? Ask: 'show logs for [container-name]'`;
+        return { message: `Azure Infrastructure Status:\n\n• Running: ${running} containers\n• Stopped: ${stopped} containers\n• Pending: ${pending} containers\n• Total: ${containers.length} containers\n\nNeed details on a specific container? Ask: 'show logs for [container-name]'` };
       } catch (error: any) {
-        return `Cannot check status: ${error.message}\n\nPlease verify your Azure credentials in Settings.`;
+        return { message: `Cannot check status: ${error.message}\n\nPlease verify your Azure credentials in Settings.` };
       }
     }
     
     // Container management
     if (lowercaseMessage.includes("stop") && lowercaseMessage.includes("container")) {
-      return "I can stop Azure containers for you.\n\nPlease specify:\n• Container name\n• Resource group\n\nExample: 'stop container web-server in my-rg'";
+      return { message: "I can stop Azure containers for you.\n\nPlease specify:\n• Container name\n• Resource group\n\nExample: 'stop container web-server in my-rg'" };
     }
     
     if (lowercaseMessage.includes("delete") || lowercaseMessage.includes("remove")) {
-      return "I can delete Azure containers.\n\nPlease specify:\n• Container name\n• Resource group\n\nExample: 'delete container web-server in my-rg'\n\nWarning: This action cannot be undone.";
+      return { message: "I can delete Azure containers.\n\nPlease specify:\n• Container name\n• Resource group\n\nExample: 'delete container web-server in my-rg'\n\nWarning: This action cannot be undone." };
     }
     
     // Logs
     if (lowercaseMessage.includes("logs") || lowercaseMessage.includes("debug")) {
-      return "I can retrieve container logs for debugging.\n\nPlease specify:\n• Container name\n• Resource group\n\nExample: 'show logs for web-server in my-rg'";
+      return { message: "I can retrieve container logs for debugging.\n\nPlease specify:\n• Container name\n• Resource group\n\nExample: 'show logs for web-server in my-rg'" };
     }
     
     // Help
     if (lowercaseMessage.includes("help")) {
-      return "Azure Cloud Assistant Commands:\n\n• 'deploy nginx to azure' - Deploy web server\n• 'list containers' - Show all containers\n• 'check status' - Infrastructure overview\n• 'stop container [name] in [rg]' - Stop container\n• 'delete container [name] in [rg]' - Delete container\n• 'show logs for [name] in [rg]' - View logs\n\nReady to deploy something?";
+      return { message: "Azure Cloud Assistant Commands:\n\n• 'deploy nginx to azure' - Deploy web server\n• 'create postgres database' - Set up database\n• 'setup storage account' - Configure storage\n• 'create kubernetes cluster' - Set up AKS\n• 'list containers' - Show all containers\n• 'check status' - Infrastructure overview\n\nI generate Terraform and Pulumi code for your infrastructure!" };
     }
     
     // Greetings
     if (lowercaseMessage.includes("hello") || lowercaseMessage.includes("hi")) {
-      return "Hello! I'm your Azure deployment assistant.\n\nI can help you deploy and manage containers on Azure.\n\nTry: 'deploy nginx to azure' or 'list containers'";
+      return { message: "Hello! I'm your Infrastructure-as-Code assistant.\n\nI generate Terraform and Pulumi code from your natural language requests.\n\nTry: 'deploy nginx to azure' or 'create postgres database'" };
     }
     
     // Default
-    return "I can help manage your Azure infrastructure through chat!\n\nTry:\n• 'deploy nginx to azure'\n• 'list my containers'\n• 'check status'\n• 'help' for more commands\n\nWhat would you like to do?";
+    return { message: "I generate Infrastructure-as-Code from your requests!\n\nTry:\n• 'deploy nginx to azure'\n• 'create postgres database'\n• 'setup storage account'\n• 'create kubernetes cluster'\n• 'help' for more commands\n\nWhat infrastructure would you like to create?" };
     
   } catch (error: any) {
-    return `Error processing request: ${error.message}`;
+    return { message: `Error processing request: ${error.message}` };
   }
 }

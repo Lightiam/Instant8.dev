@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Send, Bot, User, Code, Play, Settings, Copy, Download } from "lucide-react";
 import { useWebSocket } from "@/hooks/use-websocket";
+import { EnvironmentConfig } from "@/components/env-config";
 
 interface ChatMessage {
   id: string;
