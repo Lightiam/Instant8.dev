@@ -4,6 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Send, Bot, User, Code, Play, Settings, Copy, Download, ArrowLeft } from "lucide-react";
 import { useWebSocket } from "@/hooks/use-websocket";
 import { EnvironmentConfig } from "@/components/env-config";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 interface ChatMessage {
   id: string;
@@ -86,7 +88,9 @@ export default function ChatWorkspace() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showEnvConfig, setShowEnvConfig] = useState(false);
+  const [deploymentStatus, setDeploymentStatus] = useState<{[key: string]: string}>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
 
   const { sendMessage } = useWebSocket((message) => {
     if (message.type === 'chat-response') {
@@ -140,6 +144,58 @@ export default function ChatWorkspace() {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
+    }
+  };
+
+  const handleDeploy = async (code?: string, codeType?: string) => {
+    if (!code || !codeType) {
+      toast({
+        title: "Deployment Error",
+        description: "No code available for deployment",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const deploymentId = `deploy-${Date.now()}`;
+      setDeploymentStatus(prev => ({ ...prev, [deploymentId]: 'deploying' }));
+
+      toast({
+        title: "Deployment Started",
+        description: "Infrastructure deployment initiated to Azure",
+      });
+
+      const response = await apiRequest('/api/deploy', {
+        method: 'POST',
+        body: JSON.stringify({
+          code,
+          codeType,
+          provider: 'azure',
+          resourceType: 'container'
+        }),
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const result = await response.json();
+      setDeploymentStatus(prev => ({ ...prev, [deploymentId]: 'success' }));
+      
+      toast({
+        title: "Deployment Successful",
+        description: `Infrastructure deployed successfully. Deployment ID: ${result.deploymentId}`,
+      });
+
+    } catch (error: any) {
+      const deploymentId = `deploy-${Date.now()}`;
+      setDeploymentStatus(prev => ({ ...prev, [deploymentId]: 'failed' }));
+      
+      toast({
+        title: "Deployment Failed",
+        description: error.message || "Failed to deploy infrastructure",
+        variant: "destructive"
+      });
     }
   };
 
@@ -306,7 +362,11 @@ export default function ChatWorkspace() {
                               <Download className="w-4 h-4 mr-1" />
                               Download
                             </Button>
-                            <Button size="sm" className="bg-green-600 hover:bg-green-700 h-9">
+                            <Button 
+                              size="sm" 
+                              className="bg-green-600 hover:bg-green-700 h-9"
+                              onClick={() => handleDeploy(message.code, message.codeType)}
+                            >
                               <Play className="w-4 h-4 mr-1" />
                               Deploy to Cloud
                             </Button>

@@ -256,6 +256,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Test Azure connection
+  app.post("/api/credentials/test/azure", async (req, res) => {
+    try {
+      const azureService = getAzureService();
+      
+      // Test connection by attempting to list resource groups
+      const testResult = await azureService.listContainers();
+      
+      res.json({ 
+        success: true, 
+        message: "Azure connection successful",
+        containers: testResult.length 
+      });
+    } catch (error: any) {
+      console.error("Azure connection test failed:", error);
+      res.status(400).json({ 
+        success: false, 
+        error: error.message || "Failed to connect to Azure" 
+      });
+    }
+  });
+
   // Deployment API routes
   app.post("/api/deploy", async (req, res) => {
     try {
