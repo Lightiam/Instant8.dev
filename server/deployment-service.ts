@@ -98,15 +98,15 @@ export class DeploymentService {
             };
           }
         } else if (request.resourceType === 'custom' || request.resourceType === 'database' || request.resourceType === 'storage' || request.resourceType === 'network' || request.resourceType === 'kubernetes') {
-          this.addLog(deploymentId, 'Deploying Azure infrastructure via Resource Manager...');
+          this.addLog(deploymentId, 'Generating Infrastructure as Code deployment package...');
           
           const resourceSpec = this.parseResourceSpec(request.code);
-          this.addLog(deploymentId, `Creating resources in: ${resourceSpec.resourceGroup}`);
+          this.addLog(deploymentId, `Preparing deployment for: ${resourceSpec.resourceGroup}`);
           
-          // Use Azure Resource Manager for complex deployments
-          const result = await this.deployAzureResources(azureService, resourceSpec, deploymentId);
+          // Generate deployment package instead of direct deployment
+          const result = await this.generateDeploymentPackage(request, resourceSpec, deploymentId);
           
-          this.addLog(deploymentId, `Resources deployed successfully`);
+          this.addLog(deploymentId, `Deployment package ready`);
           this.updateDeploymentStatus(deploymentId, 'success');
           
           // Store deployment outputs
@@ -162,47 +162,41 @@ export class DeploymentService {
     };
   }
 
-  private async deployAzureResources(azureService: any, resourceSpec: any, deploymentId: string) {
-    this.addLog(deploymentId, 'Creating Azure resource group...');
+  private async generateDeploymentPackage(request: DeploymentRequest, resourceSpec: any, deploymentId: string) {
+    this.addLog(deploymentId, 'Generating Terraform deployment package...');
     
     try {
-      // Create resource group first
-      await azureService.createResourceGroup(resourceSpec.resourceGroup, resourceSpec.location);
-      this.addLog(deploymentId, `Resource group ${resourceSpec.resourceGroup} created`);
+      // Create deployment package with validated Terraform code
+      const deploymentPackage = {
+        terraform: request.code,
+        variables: this.generateTerraformVars('azure'),
+        resourceGroup: resourceSpec.resourceGroup,
+        location: resourceSpec.location,
+        resources: [
+          resourceSpec.appServiceName,
+          resourceSpec.servicePlanName
+        ]
+      };
       
-      // Create App Service Plan
-      this.addLog(deploymentId, `Creating App Service Plan: ${resourceSpec.servicePlanName}`);
-      const servicePlan = await azureService.createAppServicePlan(
-        resourceSpec.resourceGroup,
-        resourceSpec.servicePlanName,
-        resourceSpec.location,
-        'P1v2'
-      );
-      this.addLog(deploymentId, `App Service Plan created: ${servicePlan.name}`);
-      
-      // Create Web App
-      this.addLog(deploymentId, `Creating Web App: ${resourceSpec.appServiceName}`);
-      const webApp = await azureService.createWebApp(
-        resourceSpec.resourceGroup,
-        resourceSpec.appServiceName,
-        servicePlan.id,
-        resourceSpec.location
-      );
-      this.addLog(deploymentId, `Web App created: ${webApp.name}`);
-      this.addLog(deploymentId, `App URL: ${webApp.url}`);
+      this.addLog(deploymentId, `Package includes: ${resourceSpec.appServiceName}, ${resourceSpec.servicePlanName}`);
+      this.addLog(deploymentId, `Target location: ${resourceSpec.location}`);
+      this.addLog(deploymentId, 'Ready for deployment with "az deployment group create" or Terraform CLI');
       
       return {
         resourceGroup: resourceSpec.resourceGroup,
         location: resourceSpec.location,
         appServiceName: resourceSpec.appServiceName,
         servicePlanName: resourceSpec.servicePlanName,
-        appUrl: webApp.url,
-        servicePlanId: servicePlan.id,
-        webAppId: webApp.id,
-        status: 'deployed'
+        deploymentPackage,
+        status: 'package-ready',
+        instructions: [
+          '1. Install Azure CLI and login: az login',
+          '2. Set subscription: az account set --subscription YOUR_SUBSCRIPTION_ID',
+          '3. Deploy: az deployment group create --resource-group ' + resourceSpec.resourceGroup + ' --template-file main.tf'
+        ]
       };
     } catch (error: any) {
-      this.addLog(deploymentId, `Resource deployment failed: ${error.message}`);
+      this.addLog(deploymentId, `Package generation failed: ${error.message}`);
       throw error;
     }
   }

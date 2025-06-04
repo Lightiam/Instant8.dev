@@ -1,6 +1,7 @@
 import { ContainerInstanceManagementClient } from '@azure/arm-containerinstance';
 import { WebSiteManagementClient } from '@azure/arm-appservice';
 import { DefaultAzureCredential, ClientSecretCredential } from '@azure/identity';
+import { createSimpleAzureAuth, getSimplifiedErrorMessage } from './auth-helpers';
 
 interface AzureConfig {
   clientId: string;
