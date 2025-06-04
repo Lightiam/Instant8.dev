@@ -83,15 +83,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         const message = JSON.parse(data.toString());
         
-        if (message.type === 'chat_message') {
+        if (message.type === 'chat-message') {
           // Store the message
           const chatMessage = await storage.createChatMessage({
             userId: 1, // Mock user ID
-            message: message.content
+            message: message.message
           });
 
           // Generate AI response
-          const response = await generateChatResponse(message.content.toLowerCase());
+          const response = await generateChatResponse(message.message);
           
           // Update with response
           await storage.updateChatResponse(chatMessage.id, response.message);
@@ -99,7 +99,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Send response back to client
           if (ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify({
-              type: 'chat_response',
+              type: 'chat-response',
               message: response.message,
               code: response.code,
               codeType: response.codeType,
