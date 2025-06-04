@@ -345,7 +345,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/deploy/:deploymentId/status", async (req, res) => {
     try {
       const { deploymentId } = req.params;
-      const deployment = deploymentService.getDeploymentStatus(deploymentId);
+      const { saasDeploymentService } = await import('./saas-deployment-service');
+      const deployment = saasDeploymentService.getDeploymentStatus(deploymentId);
       
       if (!deployment) {
         return res.status(404).json({ error: "Deployment not found" });
