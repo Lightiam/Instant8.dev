@@ -13,33 +13,52 @@ interface GeneratedCode {
 }
 
 export class CodeGenerator {
+  private cache = new Map<string, GeneratedCode>();
   
   generateTerraform(request: CodeGenerationRequest): GeneratedCode {
+    // Cache key for faster lookups
+    const cacheKey = `terraform-${request.provider}-${request.resourceType}-${request.prompt.slice(0, 50)}`;
+    
+    if (this.cache.has(cacheKey)) {
+      return this.cache.get(cacheKey)!;
+    }
     const { prompt, provider, resourceType } = request;
+    
+    let result: GeneratedCode;
     
     if (provider === 'azure') {
       switch (resourceType) {
         case 'container':
-          return this.generateAzureContainerTerraform(prompt);
+          result = this.generateAzureContainerTerraform(prompt);
+          break;
         case 'database':
-          return this.generateAzureDatabaseTerraform(prompt);
+          result = this.generateAzureDatabaseTerraform(prompt);
+          break;
         case 'storage':
-          return this.generateAzureStorageTerraform(prompt);
+          result = this.generateAzureStorageTerraform(prompt);
+          break;
         case 'network':
-          return this.generateAzureNetworkTerraform(prompt);
+          result = this.generateAzureNetworkTerraform(prompt);
+          break;
         case 'kubernetes':
-          return this.generateAzureKubernetesTerraform(prompt);
+          result = this.generateAzureKubernetesTerraform(prompt);
+          break;
         default:
-          return this.generateAzureCustomTerraform(prompt);
+          result = this.generateAzureCustomTerraform(prompt);
+          break;
       }
+    } else {
+      result = {
+        code: '# Code generation for other providers coming soon',
+        codeType: 'terraform',
+        resources: [],
+        description: 'Feature in development'
+      };
     }
     
-    return {
-      code: '# Code generation for other providers coming soon',
-      codeType: 'terraform',
-      resources: [],
-      description: 'Feature in development'
-    };
+    // Cache the result for faster future responses
+    this.cache.set(cacheKey, result);
+    return result;
   }
 
   generatePulumi(request: CodeGenerationRequest): GeneratedCode {

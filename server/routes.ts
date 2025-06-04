@@ -327,7 +327,7 @@ async function generateChatResponse(message: string): Promise<{ message: string;
       const provider = codeGenerator.determineProvider(message);
       const resourceType = codeGenerator.determineResourceType(message);
       
-      // Generate Infrastructure-as-Code
+      // Generate only Terraform code for faster response
       const terraformCode = codeGenerator.generateTerraform({
         prompt: message,
         provider,
@@ -335,15 +335,8 @@ async function generateChatResponse(message: string): Promise<{ message: string;
         codeType: 'terraform'
       });
       
-      const pulumiCode = codeGenerator.generatePulumi({
-        prompt: message,
-        provider,
-        resourceType,
-        codeType: 'pulumi'
-      });
-      
       return {
-        message: `I've generated Infrastructure-as-Code for your request: "${message}"\n\n${terraformCode.description}\n\nResources created:\n${terraformCode.resources.map(r => `• ${r}`).join('\n')}\n\nThe code is ready for deployment. You can switch between Terraform and Pulumi formats in the Code tab.`,
+        message: `I've generated Infrastructure-as-Code for your request: "${message}"\n\n${terraformCode.description}\n\nResources created:\n${terraformCode.resources.map(r => `• ${r}`).join('\n')}\n\nThe code is ready for deployment.`,
         code: terraformCode.code,
         codeType: 'terraform'
       };
