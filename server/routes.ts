@@ -4,6 +4,7 @@ import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { insertChatMessageSchema, insertDeploymentSchema } from "@shared/schema";
 import { z } from "zod";
+import { getAzureService } from "./azure-service";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
