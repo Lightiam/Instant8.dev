@@ -48,6 +48,12 @@ export function EnvironmentConfig() {
   });
 
   const [showSecrets, setShowSecrets] = useState({
+    azure: { clientSecret: false },
+    aws: { secretAccessKey: false },
+    gcp: { serviceAccountKey: false }
+  });
+  
+  const [savedCredentials, setSavedCredentials] = useState({
     azure: false,
     aws: false,
     gcp: false

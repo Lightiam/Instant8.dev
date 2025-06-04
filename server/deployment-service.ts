@@ -64,44 +64,65 @@ export class DeploymentService {
   }
 
   private async deployTerraform(deploymentId: string, deploymentPath: string, request: DeploymentRequest) {
-    this.addLog(deploymentId, 'Writing Terraform configuration...');
+    this.addLog(deploymentId, 'Starting Azure deployment via SDK...');
     
-    // Write main.tf file
-    const tfFile = join(deploymentPath, 'main.tf');
-    await fs.writeFile(tfFile, request.code);
-
-    // Write terraform.tfvars for Azure credentials
-    if (request.provider === 'azure') {
-      const tfvarsContent = this.generateTerraformVars('azure');
-      await fs.writeFile(join(deploymentPath, 'terraform.tfvars'), tfvarsContent);
-    }
-
-    this.updateDeploymentStatus(deploymentId, 'running');
-    this.addLog(deploymentId, 'Initializing Terraform...');
-
-    // Execute terraform commands
-    await this.execCommand('terraform init', deploymentPath, deploymentId);
-    this.addLog(deploymentId, 'Planning Terraform deployment...');
-    
-    await this.execCommand('terraform plan', deploymentPath, deploymentId);
-    this.addLog(deploymentId, 'Applying Terraform configuration...');
-    
-    const applyOutput = await this.execCommand('terraform apply -auto-approve', deploymentPath, deploymentId);
-    
-    // Get outputs
-    const outputsJson = await this.execCommand('terraform output -json', deploymentPath, deploymentId);
-    let outputs = {};
     try {
-      outputs = JSON.parse(outputsJson);
-    } catch (e) {
-      this.addLog(deploymentId, 'Could not parse Terraform outputs');
+      // Use Azure SDK directly instead of Terraform
+      const { getAzureService } = await import('./azure-service');
+      const azureService = getAzureService();
+      
+      if (request.provider === 'azure' && request.resourceType === 'container') {
+        this.addLog(deploymentId, 'Deploying container to Azure Container Instances...');
+        
+        const containerSpec = this.parseContainerSpec(request.code);
+        this.addLog(deploymentId, `Creating container: ${containerSpec.name}`);
+        
+        const result = await azureService.createContainer(containerSpec);
+        
+        this.addLog(deploymentId, `Container created successfully: ${result.name}`);
+        if (result.publicIp) {
+          this.addLog(deploymentId, `Public IP assigned: ${result.publicIp}`);
+        }
+        
+        this.updateDeploymentStatus(deploymentId, 'success');
+        
+        // Store deployment outputs
+        const deployment = this.deployments.get(deploymentId);
+        if (deployment) {
+          deployment.outputs = {
+            containerName: result.name,
+            publicIp: result.publicIp,
+            resourceGroup: containerSpec.resourceGroup,
+            location: containerSpec.location
+          };
+        }
+      } else {
+        throw new Error(`Unsupported deployment: ${request.provider} ${request.resourceType}`);
+      }
+      
+    } catch (error: any) {
+      this.addLog(deploymentId, `Deployment failed: ${error.message}`);
+      this.updateDeploymentStatus(deploymentId, 'failed', error.message);
+      throw error;
     }
+  }
 
-    this.updateDeploymentStatus(deploymentId, 'success');
-    this.addLog(deploymentId, 'Deployment completed successfully!');
+  private parseContainerSpec(terraformCode: string) {
+    // Extract container specifications from Terraform code
+    const nameMatch = terraformCode.match(/name\s*=\s*"([^"]+)"/);
+    const imageMatch = terraformCode.match(/image\s*=\s*"([^"]+)"/);
+    const resourceGroupMatch = terraformCode.match(/resource_group_name\s*=\s*"([^"]+)"/);
+    const locationMatch = terraformCode.match(/location\s*=\s*"([^"]+)"/);
     
-    const deployment = this.deployments.get(deploymentId)!;
-    deployment.outputs = outputs;
+    return {
+      name: nameMatch?.[1] || 'instanti8-container',
+      image: imageMatch?.[1] || 'nginx:latest',
+      resourceGroup: resourceGroupMatch?.[1] || 'instanti8-rg',
+      location: locationMatch?.[1] || 'eastus',
+      cpu: 1,
+      memory: 1,
+      ports: [80]
+    };
   }
 
   private async deployPulumi(deploymentId: string, deploymentPath: string, request: DeploymentRequest) {
