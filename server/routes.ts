@@ -5,6 +5,7 @@ import { storage } from "./storage";
 import { insertChatMessageSchema, insertDeploymentSchema } from "@shared/schema";
 import { z } from "zod";
 import { getAzureService } from "./azure-service";
+import { codeGenerator } from "./code-generator";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
@@ -255,16 +256,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
   return httpServer;
 }
 
-async function generateChatResponse(message: string): Promise<string> {
+async function generateChatResponse(message: string): Promise<{ message: string; code?: string; codeType?: string }> {
   const lowercaseMessage = message.toLowerCase();
   
   try {
+    // Check if this is a deployment request that should generate code
+    if (lowercaseMessage.includes("deploy") || lowercaseMessage.includes("create") || lowercaseMessage.includes("setup")) {
+      const provider = codeGenerator.determineProvider(message);
+      const resourceType = codeGenerator.determineResourceType(message);
+      
+      // Generate Infrastructure-as-Code
+      const terraformCode = codeGenerator.generateTerraform({
+        prompt: message,
+        provider,
+        resourceType,
+        codeType: 'terraform'
+      });
+      
+      const pulumiCode = codeGenerator.generatePulumi({
+        prompt: message,
+        provider,
+        resourceType,
+        codeType: 'pulumi'
+      });
+      
+      return {
+        message: `I've generated Infrastructure-as-Code for your request: "${message}"\n\n${terraformCode.description}\n\nResources created:\n${terraformCode.resources.map(r => `• ${r}`).join('\n')}\n\nThe code is ready for deployment. You can switch between Terraform and Pulumi formats in the Code tab.`,
+        code: terraformCode.code,
+        codeType: 'terraform'
+      };
+    }
+    
     // Azure deployment commands
     if (lowercaseMessage.includes("deploy") && lowercaseMessage.includes("azure")) {
       if (lowercaseMessage.includes("nginx") || lowercaseMessage.includes("web")) {
-        return "I'll deploy an nginx web server to Azure Container Instances.\n\nPlease provide:\n• Resource group name\n• Azure region (e.g., 'East US', 'West Europe')\n• Container name\n\nExample: 'Deploy nginx to my-rg in East US named web-server'";
+        return { message: "I'll generate Infrastructure-as-Code for an nginx web server on Azure Container Instances.\n\nPlease provide:\n• Resource group name\n• Azure region (e.g., 'East US', 'West Europe')\n• Container name\n\nExample: 'Deploy nginx to my-rg in East US named web-server'" };
       }
-      return "I can deploy to Azure Container Instances! What would you like to deploy?\n\n• nginx web server\n• node.js application\n• postgres database\n• custom docker image\n\nTry: 'deploy nginx to azure'";
+      return { message: "I can generate Infrastructure-as-Code for Azure deployments! What would you like to deploy?\n\n• nginx web server\n• node.js application\n• postgres database\n• kubernetes cluster\n• storage account\n• virtual network\n\nTry: 'deploy nginx to azure'" };
     }
     
     // List containers

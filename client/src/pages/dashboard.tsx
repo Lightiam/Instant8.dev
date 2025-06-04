@@ -84,7 +84,6 @@ export default function Dashboard() {
           </main>
         </div>
 
-        <ChatPanel />
       </div>
     </div>
   );
