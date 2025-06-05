@@ -14,9 +14,9 @@ export function Projects() {
           <CardTitle className="text-white">Your Projects</CardTitle>
         </CardHeader>
         <CardContent>
-          {projects?.length ? (
+          {(projects as any[])?.length ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {projects.map((project: any) => (
+              {(projects as any[]).map((project: any) => (
                 <Card key={project.id} className="bg-slate-950 border-slate-700 hover:border-slate-600 transition-colors cursor-pointer">
                   <CardContent className="p-6">
                     <div className="flex items-start space-x-3">

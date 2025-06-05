@@ -59,7 +59,7 @@ export function AzureDocker() {
   // Fetch existing containers
   const { data: containers = [], isLoading } = useQuery({
     queryKey: ['/api/azure/containers'],
-    queryFn: ({ queryKey }) => apiRequest(queryKey[0] as string),
+    queryFn: ({ queryKey }) => apiRequest('GET', queryKey[0] as string),
   });
 
   // Create new container
