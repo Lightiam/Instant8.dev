@@ -1,14 +1,14 @@
 [build]
+  command = "vite build"
+  functions = "netlify/functions"
   publish = "dist"
-  command = "npm run build:netlify"
 
 [build.environment]
-  NODE_VERSION = "20"
-  NPM_VERSION = "10"
+  NODE_VERSION = "18"
 
 [[redirects]]
   from = "/api/*"
-  to = "/.netlify/functions/server/:splat"
+  to = "/.netlify/functions/server"
   status = 200
 
 [[redirects]]
@@ -18,18 +18,3 @@
 
 [functions]
   node_bundler = "esbuild"
-  external_node_modules = ["@azure/arm-containerinstance", "@azure/arm-appservice", "@azure/identity"]
-
-[[headers]]
-  for = "/api/*"
-  [headers.values]
-    Access-Control-Allow-Origin = "*"
-    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
-    Access-Control-Allow-Headers = "Content-Type, Authorization"
-
-[[headers]]
-  for = "/*"
-  [headers.values]
-    X-Frame-Options = "DENY"
-    X-Content-Type-Options = "nosniff"
-    Referrer-Policy = "strict-origin-when-cross-origin"
