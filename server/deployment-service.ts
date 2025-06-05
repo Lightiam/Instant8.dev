@@ -148,10 +148,11 @@ export class DeploymentService {
 
   private parseResourceSpec(terraformCode: string) {
     // Extract resource specifications from Terraform code
-    const resourceGroupMatch = terraformCode.match(/resource\s+"azurerm_resource_group"\s+"[^"]+"\s+\{[^}]*name\s*=\s*"([^"]+)"/s);
+    const resourceGroupMatch = terraformCode.match(/resource\s+"azurerm_resource_group"\s+"[^"]+"\s+\{[\s\S]*?name\s*=\s*"([^"]+)"/);
     const locationMatch = terraformCode.match(/location\s*=\s*"([^"]+)"/);
-    const appServiceMatch = terraformCode.match(/resource\s+"azurerm_windows_web_app"\s+"[^"]+"\s+\{[^}]*name\s*=\s*"([^"]+)"/s);
-    const servicePlanMatch = terraformCode.match(/resource\s+"azurerm_service_plan"\s+"[^"]+"\s+\{[^}]*name\s*=\s*"([^"]+)"/s);
+    const appServiceMatch = terraformCode.match(/resource\s+"azurerm_windows_web_app"\s+"[^"]+"\s+\{[\s\S]*?name\s*=\s*"([^"]+)"/);
+    const servicePlanMatch = terraformCode.match(/resource\s+"azurerm_service_plan"\s+"[^"]+"\s+\{[\s\S]*?name\s*=\s*"([^"]+)"/);
+
     
     return {
       resourceGroup: resourceGroupMatch?.[1] || 'instanti8-resources',

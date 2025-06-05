@@ -4,12 +4,30 @@ import { Badge } from "@/components/ui/badge";
 import { Rocket, Cloud, DollarSign, CheckCircle, Activity } from "lucide-react";
 import { Server, Database, Globe } from "lucide-react";
 
+interface StatsResponse {
+  deployments: number;
+  providers: number;
+  cost: number;
+  uptime: number;
+}
+
+interface DeploymentResponse {
+  id: string;
+  name: string;
+  provider: string;
+  status: string;
+  region: string;
+  configuration: Record<string, any>;
+  cost: number;
+  lastDeployedAt: string;
+}
+
 export function Overview() {
-  const { data: stats } = useQuery({
+  const { data: stats } = useQuery<StatsResponse>({
     queryKey: ["/api/stats"],
   });
 
-  const { data: deployments } = useQuery({
+  const { data: deployments = [] } = useQuery<DeploymentResponse[]>({
     queryKey: ["/api/deployments"],
   });
 

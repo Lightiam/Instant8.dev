@@ -2,8 +2,16 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Folder } from "lucide-react";
 
+interface ProjectResponse {
+  id: string;
+  name: string;
+  description: string;
+  createdAt: string;
+  status: string;
+}
+
 export function Projects() {
-  const { data: projects } = useQuery({
+  const { data: projects = [] } = useQuery<ProjectResponse[]>({
     queryKey: ["/api/projects"],
   });
 

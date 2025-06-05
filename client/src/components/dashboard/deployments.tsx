@@ -5,8 +5,19 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Server, Database, Globe } from "lucide-react";
 
+interface DeploymentResponse {
+  id: string;
+  name: string;
+  provider: string;
+  status: string;
+  region: string;
+  configuration: Record<string, any>;
+  cost: number;
+  lastDeployedAt: string;
+}
+
 export function Deployments() {
-  const { data: deployments } = useQuery({
+  const { data: deployments = [] } = useQuery<DeploymentResponse[]>({
     queryKey: ["/api/deployments"],
   });
 
